@@ -1900,10 +1900,10 @@ namespace RT.Serialization.Tests
                 NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToArray()
             }, test2 =>
             {
-                Assert.IsTrue(test2.FlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 0, 0));
-                Assert.IsTrue(test2.FlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
-                Assert.IsTrue(test2.NonFlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 0, 0, 0));
-                Assert.IsTrue(test2.NonFlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+                Assert.IsTrue(test2.FlagsEnforce.Select(en => (int) en).SequenceEqual([0, 1, 2, 3, 0, 0]));
+                Assert.IsTrue(test2.FlagsNonEnforce.Select(en => (int) en).SequenceEqual([0, 1, 2, 3, 4, 5]));
+                Assert.IsTrue(test2.NonFlagsEnforce.Select(en => (int) en).SequenceEqual([0, 1, 2, 0, 0, 0]));
+                Assert.IsTrue(test2.NonFlagsNonEnforce.Select(en => (int) en).SequenceEqual([0, 1, 2, 3, 4, 5]));
             });
 
             RoundTrip(new enforceEnumsListsTester
@@ -1914,10 +1914,10 @@ namespace RT.Serialization.Tests
                 NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToList()
             }, test3 =>
             {
-                Assert.IsTrue(test3.FlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3));
-                Assert.IsTrue(test3.FlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
-                Assert.IsTrue(test3.NonFlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2));
-                Assert.IsTrue(test3.NonFlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+                Assert.IsTrue(test3.FlagsEnforce.Select(en => (int) en).SequenceEqual([0, 1, 2, 3]));
+                Assert.IsTrue(test3.FlagsNonEnforce.Select(en => (int) en).SequenceEqual([0, 1, 2, 3, 4, 5]));
+                Assert.IsTrue(test3.NonFlagsEnforce.Select(en => (int) en).SequenceEqual([0, 1, 2]));
+                Assert.IsTrue(test3.NonFlagsNonEnforce.Select(en => (int) en).SequenceEqual([0, 1, 2, 3, 4, 5]));
             });
 
             RoundTrip(new enforceEnumsDictionariesTester
@@ -1928,15 +1928,15 @@ namespace RT.Serialization.Tests
                 NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToDictionary(k => k, k => k.ToString())
             }, test4 =>
             {
-                Assert.IsTrue(test4.FlagsEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2, 3));
-                Assert.IsTrue(test4.FlagsNonEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
-                Assert.IsTrue(test4.NonFlagsEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2));
-                Assert.IsTrue(test4.NonFlagsNonEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+                Assert.IsTrue(test4.FlagsEnforce.Keys.Select(en => (int) en).SequenceEqual([0, 1, 2, 3]));
+                Assert.IsTrue(test4.FlagsNonEnforce.Keys.Select(en => (int) en).SequenceEqual([0, 1, 2, 3, 4, 5]));
+                Assert.IsTrue(test4.NonFlagsEnforce.Keys.Select(en => (int) en).SequenceEqual([0, 1, 2]));
+                Assert.IsTrue(test4.NonFlagsNonEnforce.Keys.Select(en => (int) en).SequenceEqual([0, 1, 2, 3, 4, 5]));
 
-                Assert.IsTrue(test4.FlagsEnforce.Values.SequenceEqual("0", "One", "Two", "One, Two"));
-                Assert.IsTrue(test4.FlagsNonEnforce.Values.SequenceEqual("0", "One", "Two", "One, Two", "4", "5"));
-                Assert.IsTrue(test4.NonFlagsEnforce.Values.SequenceEqual("Zero", "One", "Two"));
-                Assert.IsTrue(test4.NonFlagsNonEnforce.Values.SequenceEqual("Zero", "One", "Two", "3", "4", "5"));
+                Assert.IsTrue(test4.FlagsEnforce.Values.SequenceEqual(["0", "One", "Two", "One, Two"]));
+                Assert.IsTrue(test4.FlagsNonEnforce.Values.SequenceEqual(["0", "One", "Two", "One, Two", "4", "5"]));
+                Assert.IsTrue(test4.NonFlagsEnforce.Values.SequenceEqual(["Zero", "One", "Two"]));
+                Assert.IsTrue(test4.NonFlagsNonEnforce.Values.SequenceEqual(["Zero", "One", "Two", "3", "4", "5"]));
             });
         }
 
@@ -2014,10 +2014,10 @@ namespace RT.Serialization.Tests
                 NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToArray()
             }, test2 =>
             {
-                Assert.IsTrue(test2.FlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 0, 0));
-                Assert.IsTrue(test2.FlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
-                Assert.IsTrue(test2.NonFlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 0, 0, 0));
-                Assert.IsTrue(test2.NonFlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+                Assert.IsTrue(test2.FlagsEnforce.Select(en => (int) en).SequenceEqual([0, 1, 2, 3, 0, 0]));
+                Assert.IsTrue(test2.FlagsNonEnforce.Select(en => (int) en).SequenceEqual([0, 1, 2, 3, 4, 5]));
+                Assert.IsTrue(test2.NonFlagsEnforce.Select(en => (int) en).SequenceEqual([0, 1, 2, 0, 0, 0]));
+                Assert.IsTrue(test2.NonFlagsNonEnforce.Select(en => (int) en).SequenceEqual([0, 1, 2, 3, 4, 5]));
             });
 
             RoundTrip(new aipEnforceEnumsListsTester
@@ -2028,10 +2028,10 @@ namespace RT.Serialization.Tests
                 NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToList()
             }, test3 =>
             {
-                Assert.IsTrue(test3.FlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3));
-                Assert.IsTrue(test3.FlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
-                Assert.IsTrue(test3.NonFlagsEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2));
-                Assert.IsTrue(test3.NonFlagsNonEnforce.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+                Assert.IsTrue(test3.FlagsEnforce.Select(en => (int) en).SequenceEqual([0, 1, 2, 3]));
+                Assert.IsTrue(test3.FlagsNonEnforce.Select(en => (int) en).SequenceEqual([0, 1, 2, 3, 4, 5]));
+                Assert.IsTrue(test3.NonFlagsEnforce.Select(en => (int) en).SequenceEqual([0, 1, 2]));
+                Assert.IsTrue(test3.NonFlagsNonEnforce.Select(en => (int) en).SequenceEqual([0, 1, 2, 3, 4, 5]));
             });
 
             RoundTrip(new aipEnforceEnumsDictionariesTester
@@ -2042,15 +2042,15 @@ namespace RT.Serialization.Tests
                 NonFlagsNonEnforce = Enumerable.Range(0, 6).Select(i => (nonFlagsEnum) i).ToDictionary(k => k, k => k.ToString())
             }, test4 =>
             {
-                Assert.IsTrue(test4.FlagsEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2, 3));
-                Assert.IsTrue(test4.FlagsNonEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
-                Assert.IsTrue(test4.NonFlagsEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2));
-                Assert.IsTrue(test4.NonFlagsNonEnforce.Keys.Select(en => (int) en).SequenceEqual(0, 1, 2, 3, 4, 5));
+                Assert.IsTrue(test4.FlagsEnforce.Keys.Select(en => (int) en).SequenceEqual([0, 1, 2, 3]));
+                Assert.IsTrue(test4.FlagsNonEnforce.Keys.Select(en => (int) en).SequenceEqual([0, 1, 2, 3, 4, 5]));
+                Assert.IsTrue(test4.NonFlagsEnforce.Keys.Select(en => (int) en).SequenceEqual([0, 1, 2]));
+                Assert.IsTrue(test4.NonFlagsNonEnforce.Keys.Select(en => (int) en).SequenceEqual([0, 1, 2, 3, 4, 5]));
 
-                Assert.IsTrue(test4.FlagsEnforce.Values.SequenceEqual("0", "One", "Two", "One, Two"));
-                Assert.IsTrue(test4.FlagsNonEnforce.Values.SequenceEqual("0", "One", "Two", "One, Two", "4", "5"));
-                Assert.IsTrue(test4.NonFlagsEnforce.Values.SequenceEqual("Zero", "One", "Two"));
-                Assert.IsTrue(test4.NonFlagsNonEnforce.Values.SequenceEqual("Zero", "One", "Two", "3", "4", "5"));
+                Assert.IsTrue(test4.FlagsEnforce.Values.SequenceEqual(["0", "One", "Two", "One, Two"]));
+                Assert.IsTrue(test4.FlagsNonEnforce.Values.SequenceEqual(["0", "One", "Two", "One, Two", "4", "5"]));
+                Assert.IsTrue(test4.NonFlagsEnforce.Values.SequenceEqual(["Zero", "One", "Two"]));
+                Assert.IsTrue(test4.NonFlagsNonEnforce.Values.SequenceEqual(["Zero", "One", "Two", "3", "4", "5"]));
             });
         }
 

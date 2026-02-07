@@ -129,15 +129,15 @@ public static class PostBuildChecker
                                 var constructor = (ConstructorInfo) instructions[i].Operand;
                                 string wrong = null;
                                 string wrongException = "ArgumentNullException";
-                                if (constructor.DeclaringType == typeof(ArgumentNullException) && constructor.GetParameters().Select(p => p.ParameterType).SequenceEqual(typeof(string)))
+                                if (constructor.DeclaringType == typeof(ArgumentNullException) && constructor.GetParameters().Select(p => p.ParameterType).SequenceEqual([typeof(string)]))
                                     if (instructions[i - 1].OpCode.Value == OpCodes.Ldstr.Value)
                                         if (!meth.GetParameters().Any(p => p.Name == (string) instructions[i - 1].Operand))
                                             wrong = (string) instructions[i - 1].Operand;
-                                if (constructor.DeclaringType == typeof(ArgumentNullException) && constructor.GetParameters().Select(p => p.ParameterType).SequenceEqual(typeof(string), typeof(string)))
+                                if (constructor.DeclaringType == typeof(ArgumentNullException) && constructor.GetParameters().Select(p => p.ParameterType).SequenceEqual([typeof(string), typeof(string)]))
                                     if (instructions[i - 1].OpCode.Value == OpCodes.Ldstr.Value && instructions[i - 2].OpCode.Value == OpCodes.Ldstr.Value)
                                         if (!meth.GetParameters().Any(p => p.Name == (string) instructions[i - 2].Operand))
                                             wrong = (string) instructions[i - 2].Operand;
-                                if (constructor.DeclaringType == typeof(ArgumentException) && constructor.GetParameters().Select(p => p.ParameterType).SequenceEqual(typeof(string), typeof(string)))
+                                if (constructor.DeclaringType == typeof(ArgumentException) && constructor.GetParameters().Select(p => p.ParameterType).SequenceEqual([typeof(string), typeof(string)]))
                                     if (instructions[i - 1].OpCode.Value == OpCodes.Ldstr.Value)
                                         if (!meth.GetParameters().Any(p => p.Name == (string) instructions[i - 1].Operand))
                                         {
@@ -158,7 +158,7 @@ public static class PostBuildChecker
                                     );
                                 }
 
-                                if (constructor.DeclaringType == typeof(ArgumentException) && constructor.GetParameters().Select(p => p.ParameterType).SequenceEqual(typeof(string)))
+                                if (constructor.DeclaringType == typeof(ArgumentException) && constructor.GetParameters().Select(p => p.ParameterType).SequenceEqual([typeof(string)]))
                                     rep.Error(
                                         Regex.IsMatch(meth.DeclaringType.Name, @"<.*>d__\d")
                                             ? $@"The iterator method ""{type.FullName}.{meth.Name}"" constructs an ArgumentException. Move this argument check outside the iterator."
