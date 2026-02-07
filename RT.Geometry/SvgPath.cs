@@ -324,7 +324,7 @@ public static class SvgPath
                         throw new InvalidOperationException("Internal error: unexpected path type in SVG path.");
                     case { Type: SvgPieceType.Line }:
                     case { Type: SvgPieceType.Curve }:
-                        yield return new(path[i].Type, [.. Enumerable.Reverse(path[i].Points).Skip(1), nextPoint]);
+                        yield return new(path[i].Type, [.. path[i].Points.Reversed().Skip(1), nextPoint]);
                         break;
                     case SvgArc arc:
                         yield return new SvgArc(arc.RX, arc.RY, arc.XAxisRotation, arc.LargeArcFlag, !arc.SweepFlag, nextPoint);

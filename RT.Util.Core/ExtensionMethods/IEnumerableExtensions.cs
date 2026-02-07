@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 #if NET7_0_OR_GREATER
 using System.Numerics;
 #endif
@@ -1697,6 +1697,20 @@ static class IEnumerableExtensions
             index++;
         }
     }
+
+    /// <summary>
+    ///     Inverts the order of the elements in a sequence.</summary>
+    /// <typeparam name="TResult">
+    ///     The type of the elements of source.</typeparam>
+    /// <param name="source">
+    ///     A sequence of values to reverse.</param>
+    /// <returns>
+    ///     A sequence whose elements correspond to those of the input sequence in reverse order.</returns>
+    /// <remarks>
+    ///     This just calls <see cref="Enumerable.Reverse{TSource}(IEnumerable{TSource})"/>. The motivation for this is to
+    ///     call this as an extension method without running into clashes with <see cref="List{T}.Reverse()"/> and similar
+    ///     future in-place reverse methods.</remarks>
+    public static IEnumerable<TResult> Reversed<TResult>(this IEnumerable<TResult> source) => Enumerable.Reverse(source);
 
 #if NET7_0_OR_GREATER
     /// <summary>

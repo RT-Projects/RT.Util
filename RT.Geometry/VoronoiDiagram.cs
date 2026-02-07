@@ -527,7 +527,7 @@ public sealed class VoronoiDiagram
                     lastPointEdge = (lastPointEdge + 3) % 4;
                 }
             }
-            return new PolygonD(Enumerable.Reverse(_processedPoints));
+            return new PolygonD(_processedPoints.Reversed());
         }
 
         public void AddEdge(edge edge)
