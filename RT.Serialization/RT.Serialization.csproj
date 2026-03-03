@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <Configurations>Debug-Nuget;Debug-locallibs;Release</Configurations>
     <ImplicitUsings>enable</ImplicitUsings>
     <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
     <DefineConstants>EXPORT_EXACTCONVERT</DefineConstants>
@@ -13,8 +14,12 @@
     <PackageTags>rt.util;classify;serialize;serialization;settings;config</PackageTags>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(Configuration)' == 'Debug-locallibs'">
     <ProjectReference Include="..\RT.PostBuild\RT.PostBuild.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)' != 'Debug-locallibs'">
+    <PackageReference Include="RT.PostBuild" />
   </ItemGroup>
 
   <ItemGroup>
