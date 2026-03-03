@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net481;net8.0-windows</TargetFrameworks>
+    <Configurations>Debug-Nuget;Debug-locallibs;Release</Configurations>
     <ImplicitUsings>enable</ImplicitUsings>
     <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
 
@@ -11,7 +12,7 @@
     <PackageTags>rt.util;variant</PackageTags>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(Configuration)' == 'Debug-locallibs'">
     <ProjectReference Include="..\RT.Json\RT.Json.csproj" />
     <ProjectReference Include="..\RT.PostBuild\RT.PostBuild.csproj" />
     <ProjectReference Include="..\RT.Serialization.Binary\RT.Serialization.Binary.csproj" />
@@ -20,6 +21,17 @@
     <ProjectReference Include="..\RT.Serialization\RT.Serialization.csproj" />
     <ProjectReference Include="..\RT.Util.Core\RT.Util.Core.csproj" />
     <ProjectReference Include="..\RT.Util\RT.Util.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)' != 'Debug-locallibs'">
+    <PackageReference Include="RT.Json" Version="2.0.1817" />
+    <PackageReference Include="RT.PostBuild" Version="2.0.1817" />
+    <PackageReference Include="RT.Serialization.Binary" Version="2.0.1817" />
+    <PackageReference Include="RT.Serialization.Json" Version="2.0.1817" />
+    <PackageReference Include="RT.Serialization.Xml" Version="2.0.1817" />
+    <PackageReference Include="RT.Serialization" Version="2.0.1817" />
+    <PackageReference Include="RT.Util.Core" Version="2.0.1817" />
+    <PackageReference Include="RT.Util" Version="2.0.1817" />
   </ItemGroup>
 
 </Project>
