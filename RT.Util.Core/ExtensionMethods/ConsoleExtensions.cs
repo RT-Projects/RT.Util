@@ -77,10 +77,10 @@ static class ConsoleExtensions
             return Enumerable.Empty<ConsoleColoredString>();
 
         return StringExtensions.wordWrap(
-            text.Split(new string[] { "\r\n", "\r", "\n" }),
+            text.Split(_lineEndings),
             maxWidth,
             hangingIndent,
-            (txt, substrIndex) => txt.Substring(substrIndex).Split(new string[] { " " }, options: StringSplitOptions.RemoveEmptyEntries),
+            (txt, substrIndex) => txt.Substring(substrIndex).Split(_space, options: StringSplitOptions.RemoveEmptyEntries),
             cc => cc.Length,
             txt =>
             {
@@ -98,6 +98,8 @@ static class ConsoleExtensions
             (str, start, length) => length == null ? str.Substring(start) : str.Substring(start, length.Value),
             (str1, str2) => str1 + str2);
     }
+    private static readonly string[] _lineEndings = ["\r\n", "\r", "\n"];
+    private static readonly string[] _space = [" "];
 
     /// <summary>
     ///     Colors the specified string in the specified console color.</summary>
@@ -205,27 +207,25 @@ static class ConsoleExtensions
         if (values == null)
             throw new ArgumentNullException(nameof(values));
 
-        using (var enumerator = values.GetEnumerator())
-        {
-            if (!enumerator.MoveNext())
-                return ConsoleColoredString.Empty;
+        using var enumerator = values.GetEnumerator();
+        if (!enumerator.MoveNext())
+            return ConsoleColoredString.Empty;
 
-            var list = new List<ConsoleColoredString>(values is ICollection<T> ? ((ICollection<T>) values).Count * 4 : 8);
-            bool first = true;
-            do
-            {
-                if (!first && separator != null)
-                    list.Add(separator);
-                first = false;
-                if (prefix != null)
-                    list.Add(prefix);
-                if (enumerator.Current != null)
-                    list.Add(enumerator.Current.ToConsoleColoredString(defaultColor));
-                if (suffix != null)
-                    list.Add(suffix);
-            }
-            while (enumerator.MoveNext());
-            return new ConsoleColoredString(list);
+        var list = new List<ConsoleColoredString>(values is ICollection<T> collection ? collection.Count * 4 : 8);
+        bool first = true;
+        do
+        {
+            if (!first && separator != null)
+                list.Add(separator);
+            first = false;
+            if (prefix != null)
+                list.Add(prefix);
+            if (enumerator.Current != null)
+                list.Add(enumerator.Current.ToConsoleColoredString(defaultColor));
+            if (suffix != null)
+                list.Add(suffix);
         }
+        while (enumerator.MoveNext());
+        return new ConsoleColoredString(list);
     }
 }

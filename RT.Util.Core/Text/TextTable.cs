@@ -2,8 +2,6 @@
 using RT.Util.Consoles;
 using RT.Util.ExtensionMethods;
 
-#pragma warning disable CS8981    // The type name only contains lower-cased ascii characters. Such names may become reserved for the language.
-
 namespace RT.Util.Text;
 
 /// <summary>Produces a table in a fixed-width character environment.</summary>
@@ -72,10 +70,8 @@ public sealed class TextTable
     ///     How to align the contents within the cell, or null to use <see cref="DefaultAlignment"/>.</param>
     /// <param name="background">
     ///     Specifies a background color for the whole cell.</param>
-    public void SetCell(int col, int row, string content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, HorizontalTextAlignment? alignment = null, ConsoleColor? background = null)
-    {
+    public void SetCell(int col, int row, string content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, HorizontalTextAlignment? alignment = null, ConsoleColor? background = null) =>
         setCell(col, row, content, colSpan, rowSpan, noWrap, alignment, background);
-    }
 
     /// <summary>
     ///     Places the specified content into the cell at the specified co-ordinates.</summary>
@@ -98,10 +94,8 @@ public sealed class TextTable
     /// <param name="background">
     ///     Specifies a background color for the whole cell, including its empty space. Characters with background colors in
     ///     the input string take precedence for those characters only.</param>
-    public void SetCell(int col, int row, ConsoleColoredString content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, HorizontalTextAlignment? alignment = null, ConsoleColor? background = null)
-    {
+    public void SetCell(int col, int row, ConsoleColoredString content, int colSpan = 1, int rowSpan = 1, bool noWrap = false, HorizontalTextAlignment? alignment = null, ConsoleColor? background = null) =>
         setCell(col, row, content, colSpan, rowSpan, noWrap, alignment, background);
-    }
 
     private void setCell(int col, int row, object content, int colSpan, int rowSpan, bool noWrap, HorizontalTextAlignment? alignment, ConsoleColor? background = null)
     {
@@ -119,8 +113,8 @@ public sealed class TextTable
         // Complain if setting this cell would overlap with another cell due to its colspan or rowspan
         if (row >= _cells.Count || col >= _cells[row].Count || _cells[row][col] == null || _cells[row][col] is surrogateCell)
         {
-            for (int x = 0; x < colSpan; x++)
-                for (int y = 0; y < rowSpan; y++)
+            for (var x = 0; x < colSpan; x++)
+                for (var y = 0; y < rowSpan; y++)
                     if (row + y < _cells.Count && col + x < _cells[row + y].Count && _cells[row + y][col + x] is surrogateCell)
                     {
                         var sur = (surrogateCell) _cells[row][col];
@@ -133,8 +127,8 @@ public sealed class TextTable
 
         // If the cell contains a true cell, remove it with all its surrogates
         if (_cells[row][col] is trueCell tr)
-            for (int x = 0; x < tr.ColSpan; x++)
-                for (int y = 0; y < tr.RowSpan; y++)
+            for (var x = 0; x < tr.ColSpan; x++)
+                for (var y = 0; y < tr.RowSpan; y++)
                     _cells[row + y][col + x] = null;
 
         // Insert the cell in the right place
@@ -149,8 +143,8 @@ public sealed class TextTable
         };
 
         // For cells with span, insert the appropriate surrogate cells.
-        for (int x = 0; x < colSpan; x++)
-            for (int y = x == 0 ? 1 : 0; y < rowSpan; y++)
+        for (var x = 0; x < colSpan; x++)
+            for (var y = x == 0 ? 1 : 0; y < rowSpan; y++)
             {
                 ensureCell(col + x, row + y);
                 _cells[row + y][col + x] = new surrogateCell { RealCol = col, RealRow = row };
@@ -180,17 +174,14 @@ public sealed class TextTable
     }
 
     /// <summary>Outputs the entire table to the console.</summary>
-    public void WriteToConsole()
-    {
-        toString(MaxWidth ?? ConsoleUtil.WrapToWidth(), Console.Write, s => ConsoleUtil.Write(s));
-    }
+    public void WriteToConsole() => toString(MaxWidth ?? ConsoleUtil.WrapToWidth(), Console.Write, s => ConsoleUtil.Write(s));
 
     private void toString(int? maxWidth, Action<string> outputString, Action<ConsoleColoredString> outputColoredString)
     {
-        int rows = _cells.Count;
+        var rows = _cells.Count;
         if (rows == 0)
             return;
-        int cols = _cells.Max(row => row.Count);
+        var cols = _cells.Max(row => row.Count);
 
         if (StretchLastCell)
         {
@@ -214,9 +205,9 @@ public sealed class TextTable
                 var cel = _cells[row][col];
                 if (cel == null)
                     continue;
-                if (cel is surrogateCell && ((surrogateCell) cel).RealRow != row)
+                if (cel is surrogateCell surrogate && surrogate.RealRow != row)
                     continue;
-                int realCol = cel is surrogateCell ? ((surrogateCell) cel).RealCol : col;
+                var realCol = cel is surrogateCell surr ? surr.RealCol : col;
                 var realCell = (trueCell) _cells[row][realCol];
                 if (realCol + realCell.ColSpan - 1 != col)
                     continue;
@@ -245,7 +236,7 @@ public sealed class TextTable
         if (maxWidth != null && columnWidths.Sum() > maxWidth - (cols - 1) * ColumnSpacing)
         {
             columnWidths = new int[cols];
-            for (int i = 0; i < cols; i++) columnWidths[i] = 1;
+            for (var i = 0; i < cols; i++) columnWidths[i] = 1;
         }
 
         // If the table is STILL too wide, all bets are off.
@@ -273,7 +264,7 @@ public sealed class TextTable
             // After this the width remaining will be smaller than the number of columns, so each column is missing at most 1 character.
             var widthRemaining = missingTotalWidth;
             var fractionalParts = new double[cols];
-            for (int col = 0; col < cols; col++)
+            for (var col = 0; col < cols; col++)
             {
                 var widthToAdd = (double) (widthProportionByCol[col] * missingTotalWidth) / widthProportionTotal;
                 var integerPart = (int) widthToAdd;
@@ -293,10 +284,9 @@ public sealed class TextTable
         }
 
         // Word-wrap all the contents of all the cells
-        trueCell truCel;
         foreach (var row in _cells)
-            for (int col = 0; col < row.Count; col++)
-                if ((truCel = row[col] as trueCell) != null)
+            for (var col = 0; col < row.Count; col++)
+                if (row[col] is trueCell truCel)
                     truCel.Wordwrap(columnWidths.Skip(col).Take(truCel.ColSpan).Sum() + (truCel.ColSpan - 1) * ColumnSpacing);
 
         // Calculate the string index for each column
@@ -306,15 +296,15 @@ public sealed class TextTable
         var realWidth = strIndexByCol[cols] - ColumnSpacing;
 
         // Make sure we don't render rules if we can't
-        bool verticalRules = VerticalRules && ColumnSpacing > 0;
-        bool horizontalRules = HorizontalRules && RowSpacing > 0;
+        var verticalRules = VerticalRules && ColumnSpacing > 0;
+        var horizontalRules = HorizontalRules && RowSpacing > 0;
 
         // If we do render vertical rules, where should it be (at which string offset, counted backwards from the end of the column spacing)
         var vertRuleOffset = (ColumnSpacing + 1) / 2;
 
         // Finally, render the entire output
         List<ConsoleColoredString> currentLine = null;
-        for (int row = 0; row < rows; row++)
+        for (var row = 0; row < rows; row++)
         {
             var rowList = _cells[row];
             var extraRows = RowSpacing + 1;
@@ -328,16 +318,16 @@ public sealed class TextTable
 
                 // If StretchLastCell is true, the last cell is treated as having colspan to the end of the row and will thus complete the render of the row.
                 // Otherwise, we need to process all cells to the end of the row even if they are null (to fill the row and also take care of vertical rules).
-                for (int col = 0; StretchLastCell ? (col < rowList.Count) : (col < cols); col++)
+                for (var col = 0; StretchLastCell ? (col < rowList.Count) : (col < cols); col++)
                 {
                     var cel = col < rowList.Count ? rowList[col] : null;
 
                     // For cells with colspan, consider only the first cell they're spanning and skip the rest
-                    if (cel is surrogateCell && ((surrogateCell) cel).RealCol != col)
+                    if (cel is surrogateCell surrogate && surrogate.RealCol != col)
                         continue;
 
                     // If the cell has rowspan, what row did this cell start in?
-                    var valueRow = cel is surrogateCell ? ((surrogateCell) cel).RealRow : row;
+                    var valueRow = cel is surrogateCell surr ? surr.RealRow : row;
 
                     // Retrieve the data for the cell
                     var realCell = col < _cells[valueRow].Count ? (trueCell) _cells[valueRow][col] : null;
@@ -356,8 +346,8 @@ public sealed class TextTable
                         var cellBackground = realCell.Background ?? rowBackground;
                         if (strIndexByCol[col] > curLineLength)
                             currentLine.Add(new string(' ', strIndexByCol[col] - curLineLength).Color(null, cellBackground));
-                        object textRaw = realCell.WordwrappedValue[realCell.WordwrappedIndex];
-                        ConsoleColoredString text = textRaw is ConsoleColoredString ? (ConsoleColoredString) textRaw : (string) textRaw;  // implicit conversion to ConsoleColoredString
+                        var textRaw = realCell.WordwrappedValue[realCell.WordwrappedIndex];
+                        var text = textRaw is ConsoleColoredString ccs ? ccs : (string) textRaw;  // implicit conversion to ConsoleColoredString
                         if (align == HorizontalTextAlignment.Center)
                             currentLine.Add(new string(' ', (strIndexByCol[col + colspan] - strIndexByCol[col] - ColumnSpacing - text.Length) / 2).Color(null, cellBackground));
                         else if (align == HorizontalTextAlignment.Right)
@@ -387,7 +377,7 @@ public sealed class TextTable
                     else
                     {
                         var subtract = (col + colspan == cols ? ColumnSpacing : vertRuleOffset) + currentLine.Sum(c => c.Length);
-                        currentLine.Add(new string(' ', strIndexByCol[col + colspan] - subtract).Color(null, (realCell == null ? null : realCell.Background) ?? rowBackground));
+                        currentLine.Add(new string(' ', strIndexByCol[col + colspan] - subtract).Color(null, realCell?.Background ?? rowBackground));
                     }
 
                     // If we are at the beginning of a row, render the horizontal rules for the row above by modifying the previous line.
@@ -432,7 +422,7 @@ public sealed class TextTable
     private sealed class surrogateCell : cell
     {
         public int RealRow, RealCol;
-        public override string ToString() { return "{" + RealCol + ", " + RealRow + "}"; }
+        public override string ToString() => $"{{{RealCol}, {RealRow}}}";
     }
     private sealed class trueCell : cell
     {
@@ -442,43 +432,33 @@ public sealed class TextTable
         public bool NoWrap;
         public HorizontalTextAlignment? Alignment; // if null, use TextTable.DefaultAlignment
         public ConsoleColor? Background;
-        public override string ToString() { return Value.ToString(); }
+        public override string ToString() => Value.ToString();
 
         private int? _cachedLongestWord = null;
         private int? _cachedLongestPara = null;
-        public int LongestWord()
+        public int LongestWord() => getLongest(' ', ref _cachedLongestWord);
+        public int LongestParagraph() => getLongest('\n', ref _cachedLongestPara);
+        public int MinWidth() => NoWrap ? LongestParagraph() : LongestWord();
+        private int getLongest(char sep, ref int? cache)
         {
-            return getLongest(' ', false, ref _cachedLongestWord);
-        }
-        public int LongestParagraph()
-        {
-            return getLongest('\n', true, ref _cachedLongestPara);
-        }
-        public int MinWidth()
-        {
-            return NoWrap ? LongestParagraph() : LongestWord();
-        }
-        private int getLongest(char sep, bool para, ref int? cache)
-        {
-            if (cache == null)
-                cache = Value.ToString().Split(sep).Max(s => s.Length);
+            cache ??= Value.ToString().Split(sep).Max(s => s.Length);
             return cache.Value;
         }
 
         public void Wordwrap(int wrapWidth)
         {
-            if (Value is string)
-                WordwrappedValue = ((string) Value).WordWrap(wrapWidth).Cast<object>().ToArray();
-            else if (Value is ConsoleColoredString)
-                WordwrappedValue = ((ConsoleColoredString) Value).WordWrap(wrapWidth).Cast<object>().ToArray();
-            else
-                throw new InvalidOperationException("h287y2");
+            WordwrappedValue = Value switch
+            {
+                string str => str.WordWrap(wrapWidth).Cast<object>().ToArray(),
+                ConsoleColoredString ccs => ccs.WordWrap(wrapWidth).Cast<object>().ToArray(),
+                _ => throw new InvalidOperationException("h287y2")
+            };
             WordwrappedIndex = 0;
         }
     }
 
-    private List<List<cell>> _cells = new List<List<cell>>();
-    private List<ConsoleColor?> _rowBackgrounds = new List<ConsoleColor?>();
+    private List<List<cell>> _cells = [];
+    private List<ConsoleColor?> _rowBackgrounds = [];
 
     /// <summary>
     ///     Sets a background color for an entire row within the table, including the vertical rules if <see
@@ -506,7 +486,7 @@ public sealed class TextTable
     }
 
     // Distributes 'width' evenly over the columns from 'col' - 'colspan' + 1 to 'col'.
-    private void distributeEvenly(int[] colWidths, int col, int colSpan, int width)
+    private static void distributeEvenly(int[] colWidths, int col, int colSpan, int width)
     {
         if (width <= 0) return;
         var each = width / colSpan;
@@ -520,7 +500,7 @@ public sealed class TextTable
     private int[] generateColumnWidths(int cols, SortedDictionary<int, List<int>>[] cellsByColspan, Func<trueCell, int> getMinWidth)
     {
         var columnWidths = new int[cols];
-        for (int col = 0; col < cols; col++)
+        for (var col = 0; col < cols; col++)
             foreach (var kvp in cellsByColspan[col])
                 distributeEvenly(
                     columnWidths,
@@ -534,53 +514,40 @@ public sealed class TextTable
     /// <summary>Removes columns that contain only empty cells. Subsequent columns are moved to the left accordingly.</summary>
     public void RemoveEmptyColumns()
     {
-        int cols = _cells.Max(row => row.Count);
-        int col = 0;
+        var cols = _cells.Max(row => row.Count);
+        var col = 0;
         while (col < cols)
         {
-            bool columnEmpty = true;
-            foreach (var row in _cells)
-            {
-                if (row.Count <= col)
-                    continue;
-                var cel = row[col] as trueCell;
-                if (cel != null && cel.ColSpan == 1 && cel.Value != null && (
-                    (cel.Value is string && ((string) cel.Value).Length > 0) ||
-                    (cel.Value is ConsoleColoredString && ((ConsoleColoredString) cel.Value).Length > 0)))
-                {
-                    columnEmpty = false;
-                    break;
-                }
-            }
-            if (!columnEmpty)
+            // A column is deemed non-empty if there is a cell with colspan 1 and non-empty value in it.
+            // Cells with colspan > 1 are “removed” by having their colspan decremented, so if it reaches colspan=1, it will be considered non-empty then.
+            if (_cells.Any(row => row.Count > col && row[col] is trueCell { ColSpan: 1, Value: string { Length: > 0 } or ConsoleColoredString { Length: > 0 } }))
             {
                 col++;
                 continue;
             }
 
-            for (int row = 0; row < _cells.Count; row++)
+            for (var row = 0; row < _cells.Count; row++)
             {
                 if (_cells[row].Count <= col)
                     continue;
                 var cel = _cells[row][col];
-                if (cel != null && cel is surrogateCell && ((surrogateCell) cel).RealRow == row)
+                if (cel is surrogateCell surrogate && surrogate.RealRow == row)
                 {
-                    ((trueCell) _cells[row][((surrogateCell) cel).RealCol]).ColSpan--;
+                    ((trueCell) _cells[row][surrogate.RealCol]).ColSpan--;
                     _cells[row].RemoveAt(col);
                 }
-                else if (cel != null && cel is trueCell && ((trueCell) cel).ColSpan > 1)
+                else if (cel is trueCell { ColSpan: > 1 } trueCel)
                 {
-                    ((trueCell) cel).ColSpan--;
+                    trueCel.ColSpan--;
                     _cells[row].RemoveAt(col + 1);
                 }
                 else
                 {
                     _cells[row].RemoveAt(col);
                 }
-                for (int c = col + 1; c < _cells[row].Count; c++)
+                for (var c = col + 1; c < _cells[row].Count; c++)
                 {
-                    var cl = _cells[row][c] as surrogateCell;
-                    if (cl != null && cl.RealCol > col)
+                    if (_cells[row][c] is surrogateCell cl && cl.RealCol > col)
                         cl.RealCol--;
                 }
             }
@@ -595,7 +562,7 @@ public sealed class TextTable
     public void AddRow(params string[] values)
     {
         var row = _cells.Count;
-        for (int col = 0; col < values.Length; col++)
+        for (var col = 0; col < values.Length; col++)
             SetCell(col, row, values[col]);
     }
 
@@ -606,7 +573,7 @@ public sealed class TextTable
     public void AddRow(params ConsoleColoredString[] values)
     {
         var row = _cells.Count;
-        for (int col = 0; col < values.Length; col++)
+        for (var col = 0; col < values.Length; col++)
             SetCell(col, row, values[col]);
     }
 
