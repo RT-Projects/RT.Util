@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using RT.Util.Consoles;
 using RT.Util.ExtensionMethods;
 
@@ -325,7 +325,10 @@ public sealed class TextTable
                 ConsoleColoredString previousLine = currentLine == null ? null : new ConsoleColoredString(currentLine.ToArray());
                 currentLine = new List<ConsoleColoredString>();
                 anyMoreContentInThisRow = false;
-                for (int col = 0; col < cols; col++)
+
+                // If StretchLastCell is true, the last cell is treated as having colspan to the end of the row and will thus complete the render of the row.
+                // Otherwise, we need to process all cells to the end of the row even if they are null (to fill the row and also take care of vertical rules).
+                for (int col = 0; StretchLastCell ? (col < rowList.Count) : (col < cols); col++)
                 {
                     var cel = col < rowList.Count ? rowList[col] : null;
 
