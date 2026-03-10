@@ -35,14 +35,8 @@ public sealed class SvgArc(double rx, double ry, double xAxisRotation, bool larg
     public override string ToString(int decimalPlaces, bool useSpaces = false) =>
         $"A {RX.ToString($"0.{new string('#', decimalPlaces)}")}{(useSpaces ? " " : ",")}{RY.ToString($"0.{new string('#', decimalPlaces)}")} {XAxisRotation.ToString($"0.{new string('#', decimalPlaces)}")} {(LargeArcFlag ? "1" : "0")} {(SweepFlag ? "1" : "0")} {Points[0].X.ToString($"0.{new string('#', decimalPlaces)}")}{(useSpaces ? " " : ",")}{Points[0].Y.ToString($"0.{new string('#', decimalPlaces)}")}";
 
-    /// <summary>
-    ///     Returns a new <see cref="SvgPiece"/> of the same <see cref="SvgPieceType"/> in which all points have been mapped
-    ///     through the <paramref name="selector"/>.</summary>
-    /// <param name="selector">
-    ///     A function to pass all points through.</param>
-    /// <returns>
-    ///     A new <see cref="SvgPiece"/> of the same <see cref="SvgPieceType"/>.</returns>
+    /// <inheritdoc/>
     public override SvgPiece Select(Func<PointD, PointD> selector) => selector == null
         ? throw new ArgumentNullException(nameof(selector))
-        : new SvgArc(RX, RY, XAxisRotation, LargeArcFlag, SweepFlag, selector(EndPoint));
+        : throw new InvalidOperationException($"Select cannot be used on an SvgArc because the radii and flags could be affected by a coordinate transform, not just the start and end points. To apply a coordinate transform, use Smooth() to render the arc as points first and apply the transform to the result.");
 }

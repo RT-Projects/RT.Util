@@ -54,6 +54,7 @@ public static class SvgPath
                         var p1 = new PointD(p1raw.X, p1raw.Y * yFactor);
                         var p2 = new PointD(p2raw.X, p2raw.Y * yFactor);
                         var d = (p1 - p2).Length / 2;
+                        var r = Math.Max(d, arc.RX);
 
                         // If arc.SweepFlag is false, we need to draw the arc on the “other” side of the p1→p2 line.
                         // We will accomplish this by swapping the start and end points and later reversing the entire curve.
@@ -64,7 +65,7 @@ public static class SvgPath
                         var pm = (p1 + p2) / 2;
 
                         // Find the distance from that mid-point to the center of the circle
-                        var m = Math.Sqrt(Math.Pow(arc.RX, 2) - Math.Pow(d, 2));
+                        var m = Math.Sqrt(Math.Pow(r, 2) - Math.Pow(d, 2));
 
                         // Determine the center of the circle by dropping a perpendicular from the p1→p2 line and going a distance of m.
                         // The direction of the perpendicular depends on arc.LargeArcFlag.
@@ -75,7 +76,7 @@ public static class SvgPath
                         var endAngle = Math.Atan2(p2.Y - pc.Y, p2.X - pc.X);
                         if (endAngle < startAngle)
                             endAngle += 2 * Math.PI;
-                        var curve = GeomUt.SmoothCurve(startAngle, endAngle, t => new PointD(pc.X + arc.RX * Math.Cos(t), (pc.Y + arc.RX * Math.Sin(t)) / yFactor).Rotate(arc.XAxisRotation * Math.PI / 180), smoothness);
+                        var curve = GeomUt.SmoothCurve(startAngle, endAngle, t => new PointD(pc.X + r * Math.Cos(t), (pc.Y + r * Math.Sin(t)) / yFactor).Rotate(arc.XAxisRotation * Math.PI / 180), smoothness);
                         return arc.SweepFlag ? curve.Skip(1) : curve.Reversed().Skip(1);
                     }
 
