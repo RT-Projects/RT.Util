@@ -45,31 +45,38 @@ public static class SvgPath
 
                     if (cur.Type == SvgPieceType.Arc && cur is SvgArc arc && arc.Points.Length == 1)
                     {
-                        var p1 = lastPoint.Rotate(-arc.XAxisRotation * Math.PI / 180);
-                        var p2 = arc.Points[0].Rotate(-arc.XAxisRotation * Math.PI / 180);
-                        var a = arc.RX;
-                        var b = arc.RY;
+                        // Rotate the start and end point in such a way that the ellipse becomes axis-aligned.
+                        var p1raw = lastPoint.Rotate(-arc.XAxisRotation * Math.PI / 180);
+                        var p2raw = arc.Points[0].Rotate(-arc.XAxisRotation * Math.PI / 180);
 
-                        var r1 = (p1.X - p2.X) / (2 * a);
-                        var r2 = (p1.Y - p2.Y) / (2 * b);
-                        var lambda = Math.Pow(r1, 2) + Math.Pow(r2, 2);
-                        if (lambda > 1)
-                        {
-                            a *= Math.Sqrt(lambda);
-                            b *= Math.Sqrt(lambda);
-                            r1 = (p1.X - p2.X) / (2 * a);
-                            r2 = (p1.Y - p2.Y) / (2 * b);
-                            lambda = 1;
-                        }
-                        var a1 = Math.Atan2(-r1, r2);
-                        var a2 = Math.Asin(Math.Sqrt(lambda));
-                        var t1 = a1 + a2;
-                        var t2 = a1 - a2;
+                        // Scale the y-coordinates in such a way that the desired ellipse becomes a circle.
+                        var yFactor = arc.RX / arc.RY;
+                        var p1 = new PointD(p1raw.X, p1raw.Y * yFactor);
+                        var p2 = new PointD(p2raw.X, p2raw.Y * yFactor);
+                        var d = (p1 - p2).Length / 2;
 
-                        var result = GeomUt.SmoothArc(new PointD(p1.X - a * Math.Cos(t1), p1.Y - b * Math.Sin(t1)), a, b, t1, arc.LargeArcFlag ? t2 + 2 * Math.PI : t2, smoothness);
-                        if (arc.SweepFlag ^ arc.LargeArcFlag)
-                            result = result.Select(p => p1 + p2 - p).Reverse();
-                        return result.Skip(1).Select(p => p.Rotate(arc.XAxisRotation * Math.PI / 180));
+                        // If arc.SweepFlag is false, we need to draw the arc on the “other” side of the p1→p2 line.
+                        // We will accomplish this by swapping the start and end points and later reversing the entire curve.
+                        if (!arc.SweepFlag)
+                            (p1, p2) = (p2, p1);
+
+                        // Find the mid-point between the start and end point
+                        var pm = (p1 + p2) / 2;
+
+                        // Find the distance from that mid-point to the center of the circle
+                        var m = Math.Sqrt(Math.Pow(arc.RX, 2) - Math.Pow(d, 2));
+
+                        // Determine the center of the circle by dropping a perpendicular from the p1→p2 line and going a distance of m.
+                        // The direction of the perpendicular depends on arc.LargeArcFlag.
+                        var pc = pm + m * (arc.LargeArcFlag ? ((p2 - p1) / 2).RotateNeg90() : ((p2 - p1) / 2).Rotate90()).Normalized;
+
+                        // Start and end angle
+                        var startAngle = Math.Atan2(p1.Y - pc.Y, p1.X - pc.X);
+                        var endAngle = Math.Atan2(p2.Y - pc.Y, p2.X - pc.X);
+                        if (endAngle < startAngle)
+                            endAngle += 2 * Math.PI;
+                        var curve = GeomUt.SmoothCurve(startAngle, endAngle, t => new PointD(pc.X + arc.RX * Math.Cos(t), (pc.Y + arc.RX * Math.Sin(t)) / yFactor).Rotate(arc.XAxisRotation * Math.PI / 180), smoothness);
+                        return arc.SweepFlag ? curve.Skip(1) : curve.Reversed().Skip(1);
                     }
 
                     throw new NotImplementedException();
