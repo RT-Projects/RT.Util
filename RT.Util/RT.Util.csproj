@@ -2,14 +2,15 @@
 
   <PropertyGroup>
     <TargetFrameworks>net481;net8.0-windows</TargetFrameworks>
+    <Configurations>Debug-Nuget;Debug-locallibs;Release</Configurations>
     <ImplicitUsings>enable</ImplicitUsings>
     <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    
+
     <!-- See also: https://habr.com/ru/articles/549530/ -->
     <UseWindowsForms>true</UseWindowsForms>
     <UseWPF>true</UseWPF>
-    
+
     <Version>1.0.0.9999</Version>
     <Authors>rstarkov;Timwi;caesay</Authors>
     <Description>Wad of stuff. Code from 1.* of this package has been moved to one of the following packages: RT.Util.Core, RT.Serialization.Json / RT.Serialization.Xml, RT.Json, RT.PostBuild and RT.Util.Legacy.</Description>
@@ -17,9 +18,14 @@
     <PackageTags>rt.util;util;translation;localization;Lingo;CommandLineParser</PackageTags>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(Configuration)' == 'Debug-locallibs'">
     <ProjectReference Include="..\RT.Geometry\RT.Geometry.csproj" />
     <ProjectReference Include="..\RT.Util.Core\RT.Util.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)' != 'Debug-locallibs'">
+    <PackageReference Include="RT.Geometry" Version="2.0.1824" />
+    <PackageReference Include="RT.Util.Core" Version="2.0.1824" />
   </ItemGroup>
 
 </Project>
