@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 
 namespace RT.Util.Controls;
 
@@ -12,7 +12,7 @@ public class DoubleBufferedPanel : Panel
     public event PaintEventHandler PaintBuffer;
 
     /// <summary>Is used for detecting that the paint buffer must be repainted due to the paint event handler changing.</summary>
-    private event PaintEventHandler _previousPaintBuffer;
+    private event PaintEventHandler previousPaintBuffer;
 
     /// <summary>Holds the off-screen image. Initialised only when the first refresh occurs.</summary>
     protected Bitmap Buffer;
@@ -65,7 +65,7 @@ public class DoubleBufferedPanel : Panel
     ///     refresh of the underlying panel, which causes the off-screen buffer to be repainted over the whole panel.</summary>
     public override void Refresh()
     {
-        _previousPaintBuffer = PaintBuffer;
+        previousPaintBuffer = PaintBuffer;
         if (Width > 0 && Height > 0)
         {
             if (Buffer == null || Buffer.Width != Width || Buffer.Height != Height)
@@ -80,7 +80,7 @@ public class DoubleBufferedPanel : Panel
 
     private void paint(object sender, PaintEventArgs e)
     {
-        if (Buffer == null || PaintBuffer != _previousPaintBuffer)
+        if (Buffer == null || PaintBuffer != previousPaintBuffer)
             Refresh();
         if (Buffer != null)
             e.Graphics.DrawImage(Buffer, e.ClipRectangle, e.ClipRectangle, GraphicsUnit.Pixel);

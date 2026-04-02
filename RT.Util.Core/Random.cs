@@ -65,7 +65,7 @@ namespace RT.Util
     /// <summary>This class offers static functions which generate random numbers in a thread-safe manner.</summary>
     public static class Rnd
     {
-        private static Random _rnd = new Random();
+        private static Random _rnd = new();
 
         /// <summary>Resets the random number generator using the specified <paramref name="seed"/>.</summary>
         public static void Reset(int seed)

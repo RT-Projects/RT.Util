@@ -77,7 +77,7 @@ public sealed class Canvas
     public Size ScreenSize;
 
     /// <summary>The font to be used by text drawing functions if no font is specified.</summary>
-    public Font DefaultFont = new Font("Arial", 10f);
+    public Font DefaultFont = new("Arial", 10f);
 
     // Really try to keep these private if at all possible. ScaleX/Y must be greater than zero.
     private double _scaleX = 1;
@@ -101,13 +101,6 @@ public sealed class Canvas
     {
         Graphics = graphics;
         ScreenSize = screenSize;
-    }
-
-    /// <summary>
-    ///     Resets the scaling and offset so that world coordinates correspond to screen pixels. Maintains the offsets so that
-    ///     all visible pixels have positive coordinates and one of the corners is 0,0.</summary>
-    public void ResetViewport()
-    {
     }
 
     /// <summary>
@@ -220,7 +213,7 @@ public sealed class Canvas
     public float SH(double wh) => (float) (wh * _scaleY);
 
     /// <summary>Converts a world point to a screen point.</summary>
-    public PointF SP(PointD wp) => new PointF(SX(wp.X), SY(wp.Y));
+    public PointF SP(PointD wp) => new(SX(wp.X), SY(wp.Y));
 
     /// <summary>For internal use only. Converts world angle into screen angle as understood by GDI routines.</summary>
     private float sa(double wa)
@@ -272,7 +265,7 @@ public sealed class Canvas
     public double WH(float sh) => sh / _scaleY;
 
     /// <summary>Converts a screen point to a world point.</summary>
-    public PointD WP(PointF sp) => new PointD(WX(sp.X), WY(sp.Y));
+    public PointD WP(PointF sp) => new(WX(sp.X), WY(sp.Y));
 
     #endregion
 
@@ -341,7 +334,7 @@ public sealed class Canvas
     /// <summary>Draws a triangle using the specified pen.</summary>
     public void DrawTriangle(Pen pen, PointD v1, PointD v2, PointD v3)
     {
-        Graphics.DrawPolygon(pen, new[] { SP(v1), SP(v2), SP(v3) });
+        Graphics.DrawPolygon(pen, [SP(v1), SP(v2), SP(v3)]);
     }
 
     /// <summary>Fills a triangle using the specified brush.</summary>
@@ -353,7 +346,7 @@ public sealed class Canvas
     /// <summary>Fills a triangle using the specified brush.</summary>
     public void FillTriangle(Brush brush, PointD v1, PointD v2, PointD v3)
     {
-        Graphics.FillPolygon(brush, new[] { SP(v1), SP(v2), SP(v3) });
+        Graphics.FillPolygon(brush, [SP(v1), SP(v2), SP(v3)]);
     }
 
     /// <summary>Draws a circle using the specified pen.</summary>
@@ -443,7 +436,7 @@ public sealed class Canvas
         DrawText(text, brush, DefaultFont, centerX, centerY);
     }
 
-    private void convertAnchor(TextAnchor anchor, out int horzAlign, out int vertAlign)
+    private static void convertAnchor(TextAnchor anchor, out int horzAlign, out int vertAlign)
     {
         switch (anchor)
         {
@@ -462,11 +455,9 @@ public sealed class Canvas
 
     public void DrawText2(string text, Brush brush, double x, double y, Font font = null, TextAnchor anchor = TextAnchor.Center)
     {
-        if (font == null)
-            font = DefaultFont;
+        font ??= DefaultFont;
         SizeF size = Graphics.MeasureString(text, font);
-        int horzAlign, vertAlign;
-        convertAnchor(anchor, out horzAlign, out vertAlign);
+        convertAnchor(anchor, out var horzAlign, out var vertAlign);
         Graphics.DrawString(text, font, brush, SX(x) - (size.Width / 2) * (horzAlign + 1), SY(y) - (size.Height / 2) * (vertAlign + 1));
     }
 

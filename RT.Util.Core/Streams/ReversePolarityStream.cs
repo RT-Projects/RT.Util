@@ -1,4 +1,4 @@
-namespace RT.KitchenSink.Streams;
+﻿namespace RT.KitchenSink.Streams;
 
 /// <summary>Provides functionality to create a stream object that has reading and writing reversed.</summary>
 public static class ReversePolarityStream
@@ -41,9 +41,8 @@ public static class ReversePolarityStream
     }
 
     [Serializable]
-    private class streamAbortException : Exception
+    private class streamAbortException(Exception inner) : Exception("The stream writer threw an exception.", inner)
     {
-        public streamAbortException(Exception inner) : base("The stream writer threw an exception.", inner) { }
     }
 
     private sealed class readingCostream : Stream

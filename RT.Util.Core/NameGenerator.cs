@@ -1,4 +1,4 @@
-namespace RT.Util;
+﻿namespace RT.Util;
 
 /// <summary>Generates a sequence of short names starting with “a” through “z”, followed by two-letter names etc.</summary>
 public sealed class NameGenerator
@@ -29,11 +29,11 @@ public sealed class NameGenerator
         else
         {
             if (prev[prev.Length - 1] == 'z')
-                return prev.Substring(0, prev.Length - 1) + "0";
+                return $"{prev.Substring(0, prev.Length - 1)}0";
             else if (prev[prev.Length - 1] == '9')
-                return nextName(prev.Substring(0, prev.Length - 1)) + "a";
+                return $"{nextName(prev.Substring(0, prev.Length - 1))}a";
             else
-                return prev.Substring(0, prev.Length - 1) + (char) (prev[prev.Length - 1] + 1);
+                return $"{prev.Substring(0, prev.Length - 1)}{(char) (prev[prev.Length - 1] + 1)}";
         }
     }
 }

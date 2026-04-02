@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
 
     <!-- See also: https://habr.com/ru/articles/549530/ -->
     <UseWindowsForms>true</UseWindowsForms>

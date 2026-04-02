@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Threading;
 
 // Requirements:
@@ -38,18 +38,16 @@ public class ManagedWindow : Window
     /// <summary>
     ///     Initialises a new managed window.</summary>
     /// <param name="settings">
-    ///     An object of type <see cref="ManagedWindow.Settings"/> from which the position and size of the form are retrieved,
-    ///     and in which they will be stored.</param>
+    ///     An object of type <see cref="Settings"/> from which the position and size of the form are retrieved, and in which
+    ///     they will be stored.</param>
     public ManagedWindow(Settings settings)
     {
-        if (settings == null) throw new ArgumentNullException(nameof(settings));
-        _settings = settings;
+        _settings = settings ?? throw new ArgumentNullException(nameof(settings));
 
         try
         {
-            var resolution = (int) SystemParameters.VirtualScreenWidth + "x" + (int) SystemParameters.VirtualScreenHeight;
-            WindowDimensions dimensions;
-            if (_settings.DimensionsByRes.TryGetValue(resolution, out dimensions))
+            var resolution = $"{(int) SystemParameters.VirtualScreenWidth}x{(int) SystemParameters.VirtualScreenHeight}";
+            if (_settings.DimensionsByRes.TryGetValue(resolution, out var dimensions))
             {
                 // Already have settings for this window/resolution. Make sure they don't put the window off every screen.
                 bool visible = false;
@@ -276,7 +274,7 @@ public class ManagedWindow : Window
     public class Settings
     {
         /// <summary>Holds form dimensions for each screen resolution.</summary>
-        public Dictionary<string, WindowDimensions> DimensionsByRes = new Dictionary<string, WindowDimensions>();
+        public Dictionary<string, WindowDimensions> DimensionsByRes = [];
     }
 
     /// <summary>Stores the size, position and maximized state of the form.</summary>
@@ -296,9 +294,8 @@ public class ManagedWindow : Window
 
     private void storeSettings(object _ = null, EventArgs __ = null)
     {
-        var resolution = (int) SystemParameters.VirtualScreenWidth + "x" + (int) SystemParameters.VirtualScreenHeight;
-        WindowDimensions dimensions;
-        if (!_settings.DimensionsByRes.TryGetValue(resolution, out dimensions))
+        var resolution = $"{(int) SystemParameters.VirtualScreenWidth}x{(int) SystemParameters.VirtualScreenHeight}";
+        if (!_settings.DimensionsByRes.TryGetValue(resolution, out var dimensions))
             dimensions = _settings.DimensionsByRes[resolution] = new WindowDimensions();
         dimensions.Left = _normalLeft;
         dimensions.Top = _normalTop;

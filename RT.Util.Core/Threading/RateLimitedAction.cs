@@ -1,23 +1,16 @@
-namespace RT.Util.Threading;
+﻿namespace RT.Util.Threading;
 
 /// <summary>
 ///     Simplifies the task of performing a certain action on an arbitrary thread with a certain minimum interval between two
 ///     invocations. Only a single thread will execute the task; no threads will block waiting for that.</summary>
-public class RateLimitedAction
+/// <param name="minActionInterval">
+///     The minimum interval between two invocations.</param>
+public class RateLimitedAction(TimeSpan minActionInterval)
 {
     private DateTime _lastTimestamp;
 
     /// <summary>Gets/sets the minimum interval between two invocations.</summary>
-    public TimeSpan MinActionInterval { get; set; }
-
-    /// <summary>
-    ///     Constructor.</summary>
-    /// <param name="minActionInterval">
-    ///     The minimum interval between two invocations.</param>
-    public RateLimitedAction(TimeSpan minActionInterval)
-    {
-        MinActionInterval = minActionInterval;
-    }
+    public TimeSpan MinActionInterval { get; set; } = minActionInterval;
 
     /// <summary>
     ///     Checks whether it is time to execute the action. If so, executes it on the calling thread and returns only when

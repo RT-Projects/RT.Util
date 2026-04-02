@@ -1,4 +1,4 @@
-using RT.Util;
+﻿using RT.Util;
 using RT.Util.ExtensionMethods;
 
 namespace RT.KitchenSink.Streams;
@@ -23,22 +23,14 @@ namespace RT.KitchenSink.Streams;
 ///     <para>
 ///         Neither this class nor the peek streams returned by it are thread-safe. All accesses must occur on a single
 ///         thread.</para></remarks>
-public class PeekableStream : Stream
+/// <param name="underlyingStream">
+///     The underlying stream on which all operations are to be performed.</param>
+public class PeekableStream(Stream underlyingStream) : Stream
 {
-    private Stream _stream;
-    private LinkedList<Tuple<byte[], int>> _buffers = new LinkedList<Tuple<byte[], int>>();
+    private LinkedList<Tuple<byte[], int>> _buffers = new();
     private int _offset;
-    private List<PeekStream> _peeks = new List<PeekStream>();
+    private List<PeekStream> _peeks = [];
     private bool _disposed;
-
-    /// <summary>
-    ///     Constructor.</summary>
-    /// <param name="underlyingStream">
-    ///     The underlying stream on which all operations are to be performed.</param>
-    public PeekableStream(Stream underlyingStream)
-    {
-        _stream = underlyingStream;
-    }
 
     /// <summary>Disposes of this stream, the underlying stream and any associated peek streams.</summary>
     protected override void Dispose(bool disposing)
@@ -50,32 +42,32 @@ public class PeekableStream : Stream
             _peeks = null;
             foreach (var peek in peeks)
                 peek.Dispose();
-            _stream.Dispose();
-            _stream = null;
+            underlyingStream.Dispose();
+            underlyingStream = null;
             _buffers = null;
         }
         base.Dispose(disposing);
     }
 
     /// <summary>Indicates whether the underlying stream, and hence this stream, supports writing.</summary>
-    public override bool CanWrite { get { return _stream.CanWrite; } }
+    public override bool CanWrite { get { return underlyingStream.CanWrite; } }
     /// <summary>Indicates whether the underlying stream, and hence this stream, supports reading.</summary>
-    public override bool CanRead { get { return _stream.CanRead; } }
+    public override bool CanRead { get { return underlyingStream.CanRead; } }
     /// <summary>Indicates whether the underlying stream, and hence this stream, supports seeking.</summary>
-    public override bool CanSeek { get { return _stream.CanSeek; } }
+    public override bool CanSeek { get { return underlyingStream.CanSeek; } }
 
     /// <summary>Flushes the underlying stream.</summary>
-    public override void Flush() { _stream.Flush(); }
+    public override void Flush() { underlyingStream.Flush(); }
 
     /// <summary>Gets the length of the underlying stream, if supported by it.</summary>
-    public override long Length { get { return _stream.Length; } }
+    public override long Length { get { return underlyingStream.Length; } }
 
     /// <summary>
     ///     Sets the length of the underlying stream, if supported by it. Note that setting the length causes all peek streams
     ///     to be invalidated.</summary>
     public override void SetLength(long value)
     {
-        _stream.SetLength(value);
+        underlyingStream.SetLength(value);
         clearPeekBuffersAndInvalidate();
     }
 
@@ -87,7 +79,7 @@ public class PeekableStream : Stream
     {
         get
         {
-            long pos = _stream.Position;
+            long pos = underlyingStream.Position;
             foreach (var buf in _buffers)
                 pos -= buf.Item2;
             return pos + _offset;
@@ -100,7 +92,7 @@ public class PeekableStream : Stream
     ///     causes all peek streams to be invalidated.</summary>
     public override long Seek(long offset, SeekOrigin origin)
     {
-        var result = _stream.Seek(offset, origin);
+        var result = underlyingStream.Seek(offset, origin);
         clearPeekBuffersAndInvalidate();
         return result;
     }
@@ -118,10 +110,10 @@ public class PeekableStream : Stream
     ///         All peek streams will be invalidated.</para></remarks>
     public override void Write(byte[] buffer, int offset, int count)
     {
-        if (_stream.CanSeek)
-            _stream.Position = Position;
-        _stream.Write(buffer, offset, count);
-        if (_stream.CanSeek)
+        if (underlyingStream.CanSeek)
+            underlyingStream.Position = Position;
+        underlyingStream.Write(buffer, offset, count);
+        if (underlyingStream.CanSeek)
             clearPeekBuffersAndInvalidate();
     }
 
@@ -135,7 +127,7 @@ public class PeekableStream : Stream
     {
         if (_buffers.Count == 0)
         {
-            return _stream.Read(buffer, offset, count);
+            return underlyingStream.Read(buffer, offset, count);
         }
         else
         {
@@ -163,7 +155,7 @@ public class PeekableStream : Stream
         if (_buffers.Count == 0)
         {
             byte[] dummy = new byte[count];
-            return _stream.Read(dummy, 0, count);
+            return underlyingStream.Read(dummy, 0, count);
         }
         else
         {
@@ -199,9 +191,11 @@ public class PeekableStream : Stream
     ///         See Remarks on <see cref="PeekableStream"/> for more info.</para></summary>
     public PeekStream GetPeekStream()
     {
-        var peek = new PeekStream(this);
-        peek._buffer = _buffers.First;
-        peek._offset = _offset;
+        var peek = new PeekStream(this)
+        {
+            _buffer = _buffers.First,
+            _offset = _offset
+        };
         _peeks.Add(peek);
         return peek;
     }
@@ -221,13 +215,12 @@ public class PeekableStream : Stream
     private void peekIntoBuffers(int count)
     {
         byte[] data = new byte[count];
-        int read = _stream.Read(data, 0, count);
+        int read = underlyingStream.Read(data, 0, count);
         if (read > 0)
         {
             var node = _buffers.AddLast(Tuple.Create(data, read));
             foreach (var peek in _peeks)
-                if (peek._buffer == null)
-                    peek._buffer = node; // the offset should already be at zero in this case
+                peek._buffer ??= node; // the offset should already be at zero in this case
         }
     }
 
@@ -299,8 +292,7 @@ public class PeekableStream : Stream
         {
             if (disposing && _parent != null)
             {
-                if (_parent._peeks != null)
-                    _parent._peeks.Remove(this);
+                _parent._peeks?.Remove(this);
                 _parent = null;
                 _buffer = null;
             }

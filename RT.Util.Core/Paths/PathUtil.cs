@@ -153,10 +153,10 @@ static class PathUtil
         {
             var folderPath = Environment.GetFolderPath(folderEnum);
             if (folderPath.Length > 0 && path.StartsWith(folderPath))
-                return "$(" + folderEnum + ")" + path.Substring(folderPath.Length);
+                return $"$({folderEnum}){path.Substring(folderPath.Length)}";
         }
         if (path.StartsWith(Path.GetTempPath()))
-            return "$(Temp)" + path.Substring(Path.GetTempPath().Length);
+            return $"$(Temp){path.Substring(Path.GetTempPath().Length)}";
         return path;
     }
 
@@ -190,9 +190,9 @@ static class PathUtil
 
         int pos = -1;
         if (path.Length >= 2)
-            pos = path.LastIndexOfAny(new[] { '/', '\\' }, path.Length - 2);
+            pos = path.LastIndexOfAny(_pathSeparators, path.Length - 2);
         if (pos < 0)
-            throw new PathException($"Path \"{path}\" does not have a parent path.");
+            throw new PathException($@"Path ""{path}"" does not have a parent path.");
 
         // Leave the slash if the original path also ended in slash
         if (path[path.Length - 1] == '/' || path[path.Length - 1] == '\\')
@@ -229,7 +229,7 @@ static class PathUtil
         if (path == null)
             throw new ArgumentNullException(nameof(path));
 
-        int pos = path.LastIndexOfAny(new[] { '/', '\\' });
+        var pos = path.LastIndexOfAny(_pathSeparators);
 
         if (pos < 0)
             return path;
@@ -357,7 +357,7 @@ static class PathUtil
         if (filenameOrPattern.IndexOfAny(wildcards) < 0)
             return new[] { filenameOrPattern };
 
-        var lastSlashPos = filenameOrPattern.LastIndexOfAny(new[] { '/', '\\' });
+        var lastSlashPos = filenameOrPattern.LastIndexOfAny(_pathSeparators);
         var path = lastSlashPos < 0 ? "." : filenameOrPattern.Substring(0, lastSlashPos + 1);
         var pattern = lastSlashPos < 0 ? filenameOrPattern : filenameOrPattern.Substring(lastSlashPos + 1);
         if (path != null && path.IndexOfAny(wildcards) >= 0)
@@ -373,7 +373,7 @@ static class PathUtil
         else if (matchDirectories)
             result = Directory.EnumerateDirectories(path, pattern, options);
         else
-            return Enumerable.Empty<string>();
+            return [];
 
         result = result.Select(fullname => fullname.Substring(path.Length + 1));
 
@@ -398,6 +398,8 @@ static class PathUtil
             result += "\\";
         return result;
     }
+
+    private static readonly char[] _pathSeparators = ['/', '\\'];
 
     private static string getFullPathHelper(DirectoryInfo di)
     {
@@ -432,10 +434,8 @@ enum ToggleRelativeProblem
 #if EXPORT_UTIL
 public
 #endif
-class ToggleRelativeException : ArgumentException
+class ToggleRelativeException(ToggleRelativeProblem problem) : ArgumentException(problem.ToString())
 {
     /// <summary>Details the problem that occurred.</summary>
-    public ToggleRelativeProblem Problem { get; private set; }
-    /// <summary>Constructor.</summary>
-    public ToggleRelativeException(ToggleRelativeProblem problem) : base(problem.ToString()) { Problem = problem; }
+    public ToggleRelativeProblem Problem { get; private set; } = problem;
 }

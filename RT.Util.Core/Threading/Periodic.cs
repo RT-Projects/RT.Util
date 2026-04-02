@@ -1,4 +1,4 @@
-using RT.Util.ExtensionMethods;
+﻿using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Threading;
 
@@ -70,7 +70,7 @@ public abstract class Periodic
     ///     returns.</summary>
     public virtual bool Shutdown(bool waitForExit)
     {
-        if (waitForExit && _periodicActivityRunning && Thread.CurrentThread.ManagedThreadId == _thread.ManagedThreadId)
+        if (waitForExit && _periodicActivityRunning && Environment.CurrentManagedThreadId == _thread.ManagedThreadId)
             throw new InvalidOperationException("Cannot call Shutdown(true) from within PeriodicActivity() on the same thread (this would cause a deadlock).");
         if (_cancellation == null || _cancellation.IsCancellationRequested)
             return false;
@@ -124,7 +124,7 @@ public abstract class PeriodicMultiple : Periodic
         ///     Returns negative values for activities that aren't due yet.</summary>
         public TimeSpan DelayedBy()
         {
-            if (LastExecuted == default(DateTime))
+            if (LastExecuted == default)
                 return TimeSpan.FromDays(1000) - MinInterval; // to run shortest interval first when none of the tasks have ever executed
             else
                 return (DateTime.UtcNow - LastExecuted) - MinInterval;

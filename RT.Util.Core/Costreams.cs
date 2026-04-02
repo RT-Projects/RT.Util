@@ -1,4 +1,4 @@
-namespace RT.KitchenSink;
+﻿namespace RT.KitchenSink;
 
 static partial class Ks
 {
@@ -13,28 +13,26 @@ static partial class Ks
     {
         // Everything the writingAction writes will be enqueued in here and dequeued by the readingAction
         var queue = new Queue<byteChunk>();
-        using (var hasData = new ManualResetEvent(false))
+        using var hasData = new ManualResetEvent(false);
+        var writer = new writingCostream(queue, hasData);
+        var reader = new readingCostream(queue, hasData);
+
+        // Start reading in a new thread. The first call to reader.Read() will block until there is something in the queue to read.
+        var thread = new Thread(() => readingAction(reader));
+        thread.Start();
+
+        // Start writing. Calls to writer.Write() will place the data in the queue and signal the reading thread.
+        writingAction(writer);
+
+        // Insert a null at the end of the queue to signal to the reader that this is where the data ends.
+        lock (queue)
         {
-            var writer = new writingCostream(queue, hasData);
-            var reader = new readingCostream(queue, hasData);
-
-            // Start reading in a new thread. The first call to reader.Read() will block until there is something in the queue to read.
-            var thread = new Thread(() => readingAction(reader));
-            thread.Start();
-
-            // Start writing. Calls to writer.Write() will place the data in the queue and signal the reading thread.
-            writingAction(writer);
-
-            // Insert a null at the end of the queue to signal to the reader that this is where the data ends.
-            lock (queue)
-            {
-                queue.Enqueue(null);
-                hasData.Set();
-            }
-
-            // Wait for the reader to consume all the remaining data.
-            thread.Join();
+            queue.Enqueue(null);
+            hasData.Set();
         }
+
+        // Wait for the reader to consume all the remaining data.
+        thread.Join();
     }
 
     private sealed class byteChunk
@@ -44,17 +42,8 @@ static partial class Ks
         public int Count;
     }
 
-    private sealed class readingCostream : Stream
+    private sealed class readingCostream(Queue<byteChunk> queue, ManualResetEvent hasData) : Stream
     {
-        private Queue<byteChunk> _queue;
-        private ManualResetEvent _hasData;
-
-        public readingCostream(Queue<byteChunk> queue, ManualResetEvent hasData)
-        {
-            _queue = queue;
-            _hasData = hasData;
-        }
-
         public override bool CanRead { get { return true; } }
         public override bool CanSeek { get { return false; } }
         public override bool CanWrite { get { return false; } }
@@ -68,10 +57,10 @@ static partial class Ks
         public override int Read(byte[] buffer, int offset, int count)
         {
             // If there is no data waiting to be read, wait for it.
-            _hasData.WaitOne();
+            hasData.WaitOne();
             byteChunk peeked;
-            lock (_queue)
-                peeked = _queue.Peek();
+            lock (queue)
+                peeked = queue.Peek();
 
             // A null element in the queue signals the end of the stream. Don't dequeue this item.
             if (peeked == null)
@@ -81,12 +70,12 @@ static partial class Ks
             {
                 // If we can return the complete item, dequeue it
                 Buffer.BlockCopy(peeked.Buffer, peeked.Offset, buffer, offset, peeked.Count);
-                lock (_queue)
+                lock (queue)
                 {
-                    _queue.Dequeue();
+                    queue.Dequeue();
                     // If this has emptied the queue, tell the next call to read
-                    if (_queue.Count == 0)
-                        _hasData.Reset();
+                    if (queue.Count == 0)
+                        hasData.Reset();
                 }
 
                 return peeked.Count;
@@ -100,16 +89,8 @@ static partial class Ks
         }
     }
 
-    private sealed class writingCostream : Stream
+    private sealed class writingCostream(Queue<byteChunk> queue, ManualResetEvent hasData) : Stream
     {
-        private Queue<byteChunk> _queue;
-        private ManualResetEvent _hasData;
-        public writingCostream(Queue<byteChunk> queue, ManualResetEvent hasData)
-        {
-            _queue = queue;
-            _hasData = hasData;
-        }
-
         public override bool CanRead { get { return false; } }
         public override bool CanSeek { get { return false; } }
         public override bool CanWrite { get { return true; } }
@@ -131,12 +112,12 @@ static partial class Ks
             Buffer.BlockCopy(buffer, offset, bufferCopy, 0, count);
 
             // Put the data in the queue
-            lock (_queue)
+            lock (queue)
             {
-                _queue.Enqueue(new byteChunk { Buffer = bufferCopy, Offset = 0, Count = count });
+                queue.Enqueue(new byteChunk { Buffer = bufferCopy, Offset = 0, Count = count });
 
                 // Inform the reading thread that the queue now has data
-                _hasData.Set();
+                hasData.Set();
             }
         }
     }

@@ -1,4 +1,4 @@
-using RT.Util.ExtensionMethods;
+﻿using RT.Util.ExtensionMethods;
 
 namespace RT.Util;
 
@@ -8,7 +8,7 @@ namespace RT.Util;
 public sealed class Waiter
 {
     /// <summary>A list of limits to be observed. The waiter will ensure that *all* of these limits are satisfied.</summary>
-    public List<WaiterLimit> Limits = new List<WaiterLimit>();
+    public List<WaiterLimit> Limits = [];
     /// <summary>Whenever a wait is triggered, a warning is reported through this logger.</summary>
     public LoggerBase Log { get; set; }
 
@@ -29,7 +29,7 @@ public sealed class Waiter
         if (limits.Length == 0)
             throw new ArgumentException("Must specify at least one limit");
         Limits = limits.ToList();
-        Log = log == null ? new NullLogger() : log;
+        Log = log ?? new NullLogger();
     }
 
     /// <summary>
@@ -72,7 +72,7 @@ public sealed class WaiterLimit
     }
 
     private DateTime _firstRequest = DateTime.MinValue;
-    private Queue<DateTime> _requests = new Queue<DateTime>();
+    private Queue<DateTime> _requests = new();
 
     internal TimeSpan WaitRequired()
     {

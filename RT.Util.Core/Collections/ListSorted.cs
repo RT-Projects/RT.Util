@@ -1,4 +1,4 @@
-namespace RT.Util.Collections;
+﻿namespace RT.Util.Collections;
 
 /// <summary>
 ///     Implements a list whose items are always stored in a sorted order. Multiple equal items are allowed, and will always
@@ -13,7 +13,7 @@ public sealed class ListSorted<T> : IList<T>
     /// <summary>Creates an empty <see cref="ListSorted&lt;T&gt;"/> using a default comparer for the item type.</summary>
     public ListSorted()
     {
-        _list = new List<T>();
+        _list = [];
         _comparer = Comparer<T>.Default;
     }
 
@@ -29,7 +29,7 @@ public sealed class ListSorted<T> : IList<T>
     /// <summary>Creates an empty <see cref="ListSorted&lt;T&gt;"/> using the specified item comparer.</summary>
     public ListSorted(IComparer<T> comparer)
     {
-        _list = new List<T>();
+        _list = [];
         _comparer = comparer;
     }
 
@@ -50,7 +50,7 @@ public sealed class ListSorted<T> : IList<T>
     public void AddRange(IEnumerable<T> collection)
     {
         if (_list.Count == 0)
-            _list = new List<T>(collection.OrderBy(x => x, _comparer));
+            _list = collection.OrderBy(x => x, _comparer).ToList();
         else
             foreach (var item in collection)
                 Add(item);

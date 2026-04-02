@@ -1,4 +1,4 @@
-using RT.Util.ExtensionMethods;
+﻿using RT.Util.ExtensionMethods;
 
 namespace RT.KitchenSink.Streams;
 
@@ -10,29 +10,21 @@ namespace RT.KitchenSink.Streams;
 ///     This stream does not support seeking because of the variable length nature of the data between control points. Seeking
 ///     directly on the underlying stream must be avoided, since seeking into the middle of an escape sequence will result in
 ///     incorrect data being read.</remarks>
-public class ControlCodedStream : Stream
+/// <param name="underlyingStream">
+///     The underlying stream on which all operations are to be performed.</param>
+public class ControlCodedStream(PeekableStream underlyingStream) : Stream
 {
-    private PeekableStream _stream;
     private byte[] _buffer;
 
-    /// <summary>
-    ///     Constructor.</summary>
-    /// <param name="underlyingStream">
-    ///     The underlying stream on which all operations are to be performed.</param>
-    public ControlCodedStream(PeekableStream underlyingStream)
-    {
-        _stream = underlyingStream;
-    }
-
     /// <summary>Indicates whether the underlying stream, and hence this stream, supports writing.</summary>
-    public override bool CanWrite { get { return _stream.CanWrite; } }
+    public override bool CanWrite { get { return underlyingStream.CanWrite; } }
     /// <summary>Indicates whether the underlying stream, and hence this stream, supports reading.</summary>
-    public override bool CanRead { get { return _stream.CanRead; } }
+    public override bool CanRead { get { return underlyingStream.CanRead; } }
     /// <summary>Always returns false.</summary>
     public override bool CanSeek { get { return false; } }
 
     /// <summary>Flushes the underlying stream.</summary>
-    public override void Flush() { _stream.Flush(); }
+    public override void Flush() { underlyingStream.Flush(); }
 
     /// <summary>Throws a <see cref="NotSupportedException"/>.</summary>
     public override long Length { get { throw new NotSupportedException(); } }
@@ -50,12 +42,11 @@ public class ControlCodedStream : Stream
     public virtual void WriteControlCode(byte code)
     {
         if (code == 255)
-            throw new ArgumentOutOfRangeException("Control code 255 is reserved.");
-        if (_buffer == null)
-            _buffer = new byte[2];
+            throw new ArgumentOutOfRangeException(nameof(code), "Control code 255 is reserved.");
+        _buffer ??= new byte[2];
         _buffer[0] = 255;
         _buffer[1] = code;
-        _stream.Write(_buffer, 0, 2);
+        underlyingStream.Write(_buffer, 0, 2);
     }
 
     /// <summary>
@@ -64,18 +55,16 @@ public class ControlCodedStream : Stream
     ///     in the middle of a control code.</summary>
     public virtual int ReadControlCode()
     {
-        using (var peek = _stream.GetPeekStream())
-        {
-            byte[] read = peek.Read(2);
-            if (read.Length == 0)
-                return -1;
-            else if (read.Length == 1)
-                throw new EndOfStreamException("The end of the stream was encountered in the middle of an escape sequence.");
-            if (read[0] != 255)
-                return -1;
-            _stream.SkipExactly(2);
-            return read[1];
-        }
+        using var peek = underlyingStream.GetPeekStream();
+        byte[] read = peek.Read(2);
+        if (read.Length == 0)
+            return -1;
+        else if (read.Length == 1)
+            throw new EndOfStreamException("The end of the stream was encountered in the middle of an escape sequence.");
+        if (read[0] != 255)
+            return -1;
+        underlyingStream.SkipExactly(2);
+        return read[1];
     }
 
     /// <summary>
@@ -85,11 +74,9 @@ public class ControlCodedStream : Stream
     {
         get
         {
-            using (var peek = _stream.GetPeekStream())
-            {
-                byte[] read = peek.Read(1);
-                return read.Length == 0;
-            }
+            using var peek = underlyingStream.GetPeekStream();
+            byte[] read = peek.Read(1);
+            return read.Length == 0;
         }
     }
 
@@ -102,11 +89,11 @@ public class ControlCodedStream : Stream
         {
             if (buffer[i] == 255)
             {
-                _stream.Write(buffer, from, i - from + 1);
+                underlyingStream.Write(buffer, from, i - from + 1);
                 from = i;
             }
         }
-        _stream.Write(buffer, from, offset + count - from);
+        underlyingStream.Write(buffer, from, offset + count - from);
     }
 
     /// <summary>
@@ -118,69 +105,67 @@ public class ControlCodedStream : Stream
     ///     name="count"/> was zero.</returns>
     public override int Read(byte[] buffer, int offset, int count)
     {
-        using (var peek = _stream.GetPeekStream())
+        using var peek = underlyingStream.GetPeekStream();
+        int read = peek.Read(buffer, offset, count);
+        if (read == 0)
+            return 0;
+        else if (read == 1)
         {
-            int read = peek.Read(buffer, offset, count);
-            if (read == 0)
-                return 0;
-            else if (read == 1)
+            if (buffer[offset] != 255)
             {
-                if (buffer[offset] != 255)
-                {
-                    _stream.SkipExactly(1);
-                    return 1;
-                }
-                read = peek.Read(buffer, offset, 1);
-                if (read == 0)
-                    throw new EndOfStreamException("The stream ended in the middle of an escape sequence.");
-                if (buffer[offset] == 255)
-                {
-                    _stream.SkipExactly(2);
-                    return 1;
-                }
-                else
-                    throw new InvalidOperationException("Attempted to read a control code using Read.");
+                underlyingStream.SkipExactly(1);
+                return 1;
+            }
+            read = peek.Read(buffer, offset, 1);
+            if (read == 0)
+                throw new EndOfStreamException("The stream ended in the middle of an escape sequence.");
+            if (buffer[offset] == 255)
+            {
+                underlyingStream.SkipExactly(2);
+                return 1;
             }
             else
+                throw new InvalidOperationException("Attempted to read a control code using Read.");
+        }
+        else
+        {
+            if (buffer[offset] == 255 && buffer[offset + 1] != 255)
+                throw new InvalidOperationException("Attempted to read a control code using Read.");
+            int offsetR = offset;
+            int offsetW = offset;
+            int offsetLast = offset + read - 1;
+            while (offsetR < offsetLast)
             {
-                if (buffer[offset] == 255 && buffer[offset + 1] != 255)
-                    throw new InvalidOperationException("Attempted to read a control code using Read.");
-                int offsetR = offset;
-                int offsetW = offset;
-                int offsetLast = offset + read - 1;
-                while (offsetR < offsetLast)
+                byte cur = buffer[offsetR];
+                offsetR++;
+                if (cur == 255)
                 {
-                    byte cur = buffer[offsetR];
+                    cur = buffer[offsetR];
                     offsetR++;
-                    if (cur == 255)
+                    if (cur != 255)
                     {
-                        cur = buffer[offsetR];
-                        offsetR++;
-                        if (cur != 255)
-                        {
-                            // Found a control code, but we've definitely read at least one byte.
-                            _stream.SkipExactly(offsetR - 2 - offset);
-                            return offsetW - offset;
-                        }
+                        // Found a control code, but we've definitely read at least one byte.
+                        underlyingStream.SkipExactly(offsetR - 2 - offset);
+                        return offsetW - offset;
                     }
+                }
 
+                buffer[offsetW] = cur;
+                offsetW++;
+            }
+            if (offsetR == offsetLast)
+            {
+                byte cur = buffer[offsetR];
+                if (cur != 255)
+                {
+                    // Not the start of an escape sequence so consume it too
+                    offsetR++;
                     buffer[offsetW] = cur;
                     offsetW++;
                 }
-                if (offsetR == offsetLast)
-                {
-                    byte cur = buffer[offsetR];
-                    if (cur != 255)
-                    {
-                        // Not the start of an escape sequence so consume it too
-                        offsetR++;
-                        buffer[offsetW] = cur;
-                        offsetW++;
-                    }
-                }
-                _stream.SkipExactly(offsetR - offset);
-                return offsetW - offset;
             }
+            underlyingStream.SkipExactly(offsetR - offset);
+            return offsetW - offset;
         }
     }
 }

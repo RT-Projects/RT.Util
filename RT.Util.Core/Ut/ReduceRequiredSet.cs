@@ -1,4 +1,4 @@
-using RT.Util.ExtensionMethods;
+﻿using RT.Util.ExtensionMethods;
 
 namespace RT.Util;
 
@@ -126,7 +126,7 @@ partial class Ut
         public ReduceRequiredSetStateInternal(IList<T> items)
         {
             Items = items;
-            Ranges = new List<(int from, int to)> { (0, Items.Count - 1) };
+            Ranges = [(0, Items.Count - 1)];
         }
 
         public bool AnyPartitions { get { return Ranges.Any(r => r.from != r.to); } }

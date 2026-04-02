@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 
 namespace RT.KitchenSink;
 
@@ -30,7 +30,7 @@ namespace RT.KitchenSink;
 ///             <c>foreach</c> loops all end when the channel is closed and all elements are exhausted.</description></item></list></remarks>
 public sealed class Channel<T> : IEnumerable<T>, IDisposable
 {
-    private Queue<T> _queue = new Queue<T>();
+    private Queue<T> _queue = new();
     private bool _closed = false;
 
     /// <summary>
@@ -89,7 +89,7 @@ public sealed class Channel<T> : IEnumerable<T>, IDisposable
             }
             else
             {
-                result = default(T);
+                result = default;
                 return false;
             }
         }
@@ -137,19 +137,16 @@ public sealed class Channel<T> : IEnumerable<T>, IDisposable
     ///     The safest way to use this is with a <c>foreach</c> loop.</remarks>
     public IEnumerator<T> GetEnumerator()
     {
-        return new Enumerator(this);
+        return new enumerator(this);
     }
 
     IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
 
-    private sealed class Enumerator : IEnumerator<T>
+    private sealed class enumerator(Channel<T> channel) : IEnumerator<T>
     {
-        private Channel<T> _this;
         private T _current;
         private bool _everMoved = false;
         private bool _reachedEnd = false;
-
-        public Enumerator(Channel<T> channel) { _this = channel; }
 
         public T Current
         {
@@ -173,7 +170,7 @@ public sealed class Channel<T> : IEnumerable<T>, IDisposable
             _everMoved = true;
             if (_reachedEnd)
                 return false;
-            var ret = _this.TryRead(out _current);
+            var ret = channel.TryRead(out _current);
             if (!ret)
                 _reachedEnd = true;
             return ret;

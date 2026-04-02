@@ -1,4 +1,4 @@
-namespace RT.Util.Controls;
+﻿namespace RT.Util.Controls;
 
 /// <summary>
 ///     Encapsulates a menu item that is associated with a value from a specified type, usually an enum. These menu items are
@@ -35,12 +35,11 @@ public class MenuRadioItem<T> : ToolStripMenuItem where T : struct
     public MenuRadioItem()
         : base()
     {
-        this.Click += new EventHandler(MenuRadioItem_Click);
+        Click += new EventHandler(menuRadioItem_Click);
     }
 
-    private void MenuRadioItem_Click(object sender, EventArgs e)
+    private void menuRadioItem_Click(object sender, EventArgs e)
     {
-        if (_parentGroup != null)
-            _parentGroup.SetValue(_value);
+        _parentGroup?.SetValue(_value);
     }
 }

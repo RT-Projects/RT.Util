@@ -62,12 +62,11 @@ static class StringExtensions
     }
 
     /// <summary>Contains the set of ASCII characters allowed in a URL.</summary>
-    private static byte[] _urlAllowedBytes
+    private static byte[] urlAllowedBytes
     {
         get
         {
-            if (_urlAllowedBytesCache == null)
-                _urlAllowedBytesCache = Encoding.UTF8.GetBytes("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$-_.!*(),/:;@");
+            _urlAllowedBytesCache ??= Encoding.UTF8.GetBytes("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$-_.!*(),/:;@");
             return _urlAllowedBytesCache;
         }
     }
@@ -87,7 +86,7 @@ static class StringExtensions
         byte[] utf8 = input.ToUtf8();
         var sb = new StringBuilder();
         foreach (byte b in utf8)
-            if (_urlAllowedBytes.Contains(b))
+            if (urlAllowedBytes.Contains(b))
                 sb.Append((char) b);
             else
                 sb.AppendFormat("%{0:X2}", b);
@@ -645,7 +644,7 @@ static class StringExtensions
             else
             {
                 if (i + 1 >= value.Length)
-                    throw new ArgumentException($"String ends before the escape sequence at position {i} is complete", "value");
+                    throw new ArgumentException($"String ends before the escape sequence at position {i} is complete", nameof(value));
                 i++;
                 c = value[i];
                 int code;
@@ -668,21 +667,21 @@ static class StringExtensions
                         while (len <= 4 && i + len < value.Length && ((value[i + len] >= '0' && value[i + len] <= '9') || (value[i + len] >= 'a' && value[i + len] <= 'f') || (value[i + len] >= 'A' && value[i + len] <= 'F')))
                             len++;
                         if (len == 0)
-                            throw new ArgumentException($@"Invalid hex escape sequence ""\x"" at position {i - 2}", "value");
+                            throw new ArgumentException($@"Invalid hex escape sequence ""\x"" at position {i - 2}", nameof(value));
                         code = int.Parse(value.Substring(i, len), NumberStyles.AllowHexSpecifier);
                         result.Append((char) code);
                         i += len - 1;
                         break;
                     case 'u':
                         if (i + 4 >= value.Length)
-                            throw new ArgumentException($@"Invalid hex escape sequence ""\u"" at position {i}", "value");
+                            throw new ArgumentException($@"Invalid hex escape sequence ""\u"" at position {i}", nameof(value));
                         i++;
                         code = int.Parse(value.Substring(i, 4), NumberStyles.AllowHexSpecifier);
                         result.Append((char) code);
                         i += 3;
                         break;
                     default:
-                        throw new ArgumentException($"Unrecognised escape sequence at position {i - 1}: \\{c}", "value");
+                        throw new ArgumentException($"Unrecognised escape sequence at position {i - 1}: \\{c}", nameof(value));
                 }
             }
 
@@ -733,13 +732,13 @@ static class StringExtensions
         if (hangingIndent < 0)
             throw new ArgumentOutOfRangeException(nameof(hangingIndent), hangingIndent, "hangingIndent cannot be negative.");
         if (text == null || text.Length == 0)
-            return Enumerable.Empty<string>();
+            return [];
 
-        return wordWrap(
-            text.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None),
+        return WordWrap(
+            text.Split(["\r\n", "\r", "\n"], StringSplitOptions.None),
             maxWidth,
             hangingIndent,
-            (txt, substrIndex) => txt.Substring(substrIndex).Split(new string[] { " " }, StringSplitOptions.RemoveEmptyEntries),
+            (txt, substrIndex) => txt.Substring(substrIndex).Split([" "], StringSplitOptions.RemoveEmptyEntries),
             str => str.Length,
             txt =>
             {
@@ -758,7 +757,7 @@ static class StringExtensions
             (str1, str2) => str1 + str2);
     }
 
-    internal static IEnumerable<T> wordWrap<T, TBuilder>(IEnumerable<T> paragraphs, int maxWidth, int hangingIndent, Func<T, int, IEnumerable<T>> splitSubstringIntoWords,
+    internal static IEnumerable<T> WordWrap<T, TBuilder>(IEnumerable<T> paragraphs, int maxWidth, int hangingIndent, Func<T, int, IEnumerable<T>> splitSubstringIntoWords,
         Func<T, int> getLength, Func<T, int> getIndent, Func<int, T> spaces, Func<TBuilder> getBuilder, Func<TBuilder, int> getTotalLength, Action<TBuilder, T> add,
         Func<TBuilder, T> getString, Func<T, int, int?, T> substring, Func<T, T, T> concat)
     {
@@ -1001,7 +1000,7 @@ static class StringExtensions
     public static byte[] FromHex(this string input)
     {
         if (input == null || (input.Length % 2) != 0)
-            throw new ArgumentOutOfRangeException("The input string must be non-null and of even length.");
+            throw new ArgumentOutOfRangeException(nameof(input), "The input string must be non-null and of even length.");
         byte[] result = new byte[input.Length / 2];
         var j = 0;
         for (int i = 0; i < result.Length; i++)
@@ -1094,7 +1093,7 @@ static class StringExtensions
         if (chunkSize <= 0)
             throw new ArgumentException("chunkSize must be greater than zero.", nameof(chunkSize));
         if (str.Length == 0)
-            return Enumerable.Empty<string>();
+            return [];
         return splitIterator(str, chunkSize);
     }
     private static IEnumerable<string> splitIterator(this string str, int chunkSize)

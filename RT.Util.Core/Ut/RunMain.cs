@@ -1,4 +1,4 @@
-namespace RT.Util;
+﻿namespace RT.Util;
 
 static partial class Ut
 {
@@ -34,8 +34,7 @@ static partial class Ut
     {
         if (onUnhandledMain == null)
             throw new ArgumentNullException(nameof(onUnhandledMain));
-        if (onUnhandledThread == null)
-            onUnhandledThread = excp => { onUnhandledMain(excp); };
+        onUnhandledThread ??= excp => { onUnhandledMain(excp); };
 
         Thread.CurrentThread.Name = "Main";
 

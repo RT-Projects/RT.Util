@@ -1,4 +1,4 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 
 namespace RT.Util.ExtensionMethods;
 
@@ -86,8 +86,8 @@ public static class IQueryableExtensions
     ///     name="source"/>.</returns>
     public static T FirstOrDefault<T>(this IQueryable<T> source, T @default)
     {
-        using (var e = source.Take(1).GetEnumerator())
-            return e.MoveNext() ? e.Current : @default;
+        using var e = source.Take(1).GetEnumerator();
+        return e.MoveNext() ? e.Current : @default;
     }
 
     /// <summary>
@@ -106,8 +106,8 @@ public static class IQueryableExtensions
     ///     specified by <paramref name="predicate"/>.</returns>
     public static T FirstOrDefault<T>(this IQueryable<T> source, Expression<Func<T, bool>> predicate, T @default)
     {
-        using (var e = source.Where(predicate).Take(1).GetEnumerator())
-            return e.MoveNext() ? e.Current : @default;
+        using var e = source.Where(predicate).Take(1).GetEnumerator();
+        return e.MoveNext() ? e.Current : @default;
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public static class IQueryableExtensions
     ///     the test specified by <paramref name="predicate"/>.</returns>
     public static TResult FirstOrDefault<TSource, TResult>(this IQueryable<TSource> source, Expression<Func<TSource, bool>> predicate, Func<TSource, TResult> resultSelector, TResult @default)
     {
-        using (var e = source.Where(predicate).Select(resultSelector).Take(1).GetEnumerator())
-            return e.MoveNext() ? e.Current : @default;
+        using var e = source.Where(predicate).Select(resultSelector).Take(1).GetEnumerator();
+        return e.MoveNext() ? e.Current : @default;
     }
 }

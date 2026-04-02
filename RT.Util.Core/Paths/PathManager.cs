@@ -1,4 +1,4 @@
-namespace RT.Util.Paths;
+﻿namespace RT.Util.Paths;
 
 /// <summary>
 ///     Maintains a selection of paths in the filesystem and offers methods for enumerating all the included paths and/or
@@ -17,7 +17,7 @@ public sealed class PathManager
     /// <summary>Constructs an empty instance.</summary>
     public PathManager()
     {
-        Paths = new List<PathInfo>();
+        Paths = [];
         Reset();
     }
 
@@ -59,8 +59,7 @@ public sealed class PathManager
     /// <summary>Creates a deep clone of this class.</summary>
     public PathManager Clone()
     {
-        PathManager pm = new PathManager();
-        pm.Paths = new List<PathInfo>(Paths.Count);
+        var pm = new PathManager { Paths = new List<PathInfo>(Paths.Count) };
         pm.Paths.AddRange(Paths);
         return pm;
     }
@@ -69,7 +68,7 @@ public sealed class PathManager
     private int findPathEntry(string path)
     {
         for (int i = 0; i < Paths.Count; i++)
-            if (Paths[i].Path.ToUpper() == path.ToUpper())
+            if (Paths[i].Path.Equals(path, StringComparison.CurrentCultureIgnoreCase))
                 return i;
         return -1;
     }
@@ -87,9 +86,7 @@ public sealed class PathManager
         if (!IsPathIncluded(path) ^ include)
             return;
         // Add an entry for this path
-        var pi = new PathInfo();
-        pi.Path = PathUtil.NormPath(path);
-        pi.Include = include;
+        var pi = new PathInfo { Path = PathUtil.NormPath(path), Include = include };
         // Find where to insert it
         // Paths can be naturally sorted lexicographically, so it's as simple as that
         int fp = -1;
@@ -253,7 +250,7 @@ public sealed class PathManager
 
     private IEnumerable<FileSystemInfo> get(bool includeDirs, bool includeFiles)
     {
-        FailedFiles = new List<FileSystemInfo>();
+        FailedFiles = [];
         var toScan = new Stack<DirectoryInfo>();
         var toExclude = new List<string>();
 

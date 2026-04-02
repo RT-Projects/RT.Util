@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace RT.Util.ExtensionMethods;
@@ -11,8 +11,7 @@ public static class ProcessExtensions
     /// <summary>For each process in the system, enumerates a tuple of parent-process-id,process-id.</summary>
     public static IEnumerable<(int parentProcessId, int processId)> ParentChildProcessIds()
     {
-        var procEntry = new WinAPI.PROCESSENTRY32();
-        procEntry.dwSize = (uint) Marshal.SizeOf(typeof(WinAPI.PROCESSENTRY32));
+        var procEntry = new WinAPI.PROCESSENTRY32 { dwSize = (uint) Marshal.SizeOf(typeof(WinAPI.PROCESSENTRY32)) };
         var handleToSnapshot = WinAPI.CreateToolhelp32Snapshot((uint) WinAPI.SnapshotFlags.Process, 0);
         try
         {
@@ -46,29 +45,22 @@ public static class ProcessExtensions
             tree.AddSafe(pair.parentProcessId, pair.processId);
 
         if (!recursive)
+            return tree.TryGetValue(process.Id, out var childIds) ? childIds : [];
+
+        var children = new List<int>();
+        var todo = new Queue<int>();
+        todo.Enqueue(process.Id);
+        while (todo.Count > 0)
         {
-            if (tree.ContainsKey(process.Id))
-                return tree[process.Id];
-            else
-                return new List<int>();
+            int id = todo.Dequeue();
+            if (tree.TryGetValue(id, out var childIds))
+                foreach (int childId in childIds)
+                {
+                    children.Add(childId);
+                    todo.Enqueue(childId);
+                }
         }
-        else
-        {
-            var children = new List<int>();
-            var todo = new Queue<int>();
-            todo.Enqueue(process.Id);
-            while (todo.Count > 0)
-            {
-                int id = todo.Dequeue();
-                if (tree.ContainsKey(id))
-                    foreach (int child_id in tree[id])
-                    {
-                        children.Add(child_id);
-                        todo.Enqueue(child_id);
-                    }
-            }
-            return children;
-        }
+        return children;
     }
 
     /// <summary>

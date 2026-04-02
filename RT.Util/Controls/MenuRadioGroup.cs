@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 
 namespace RT.Util.Controls;
 
@@ -9,13 +9,10 @@ namespace RT.Util.Controls;
 ///     The type of the value associated with each menu item.</typeparam>
 public class MenuRadioGroup<T> : Component where T : struct
 {
-    private List<MenuRadioItem<T>> _members = new List<MenuRadioItem<T>>();
+    private List<MenuRadioItem<T>> _members = [];
 
     /// <summary>Returns an array of all the menu items contained in this group.</summary>
-    public MenuRadioItem<T>[] Members
-    {
-        get { return _members.ToArray(); }
-    }
+    public MenuRadioItem<T>[] Members => _members.ToArray();
 
     /// <summary>Returns the value associated with the currently-selected menu item.</summary>
     public T Value
@@ -26,7 +23,7 @@ public class MenuRadioGroup<T> : Component where T : struct
                 foreach (MenuRadioItem<T> i in _members)
                     if (i.Checked)
                         return i.Value;
-            return default(T);
+            return default;
         }
     }
 
@@ -44,8 +41,7 @@ public class MenuRadioGroup<T> : Component where T : struct
         if (_members != null)
             foreach (MenuRadioItem<T> i in _members)
                 i.Checked = (i.Value.Equals(value));
-        if (ValueChanged != null)
-            ValueChanged(this, new EventArgs());
+        ValueChanged?.Invoke(this, new EventArgs());
     }
 
     /// <summary>

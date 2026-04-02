@@ -37,7 +37,7 @@ static class DictionaryExtensions
     /// <param name="key2">
     ///     The second key to check for.</param>
     public static bool ContainsKeys<TKey1, TKey2, TValue>(this IDictionary<TKey1, Dictionary<TKey2, TValue>> source, TKey1 key1, TKey2 key2) =>
-        source == null ? throw new ArgumentNullException(nameof(source)) : !source.TryGetValue(key1, out var dic) ? false : dic.ContainsKey(key2);
+        source == null ? throw new ArgumentNullException(nameof(source)) : source.TryGetValue(key1, out var dic) && dic.ContainsKey(key2);
 
     /// <summary>
     ///     Gets the value associated with the specified combination of keys.</summary>
@@ -64,8 +64,8 @@ static class DictionaryExtensions
         if (source == null)
             throw new ArgumentNullException(nameof(source));
 
-        value = default(TValue);
-        return source.TryGetValue(key1, out var dic) ? dic.TryGetValue(key2, out value) : false;
+        value = default;
+        return source.TryGetValue(key1, out var dic) && dic.TryGetValue(key2, out value);
     }
 
     /// <summary>
@@ -81,12 +81,8 @@ static class DictionaryExtensions
         if (dictA.Count != dictB.Count)
             return false;
         foreach (var key in dictA.Keys)
-        {
-            if (!dictB.ContainsKey(key))
+            if (!dictB.TryGetValue(key, out var valB) || !dictA[key].Equals(valB))
                 return false;
-            if (!dictA[key].Equals(dictB[key]))
-                return false;
-        }
         return true;
     }
 
@@ -232,7 +228,7 @@ static class DictionaryExtensions
         if (key == null)
             throw new ArgumentNullException(nameof(key), "Null values cannot be used for keys in dictionaries.");
         if (!dic.ContainsKey(key))
-            dic[key] = new List<V>();
+            dic[key] = [];
         dic[key].Add(value);
     }
 
@@ -256,7 +252,7 @@ static class DictionaryExtensions
         if (key == null)
             throw new ArgumentNullException(nameof(key), "Null values cannot be used for keys in dictionaries.");
         if (!dic.ContainsKey(key))
-            dic[key] = new HashSet<V>();
+            dic[key] = [];
         return dic[key].Add(value);
     }
 
@@ -288,7 +284,7 @@ static class DictionaryExtensions
         if (key2 == null)
             throw new ArgumentNullException(nameof(key2), "Null values cannot be used for keys in dictionaries.");
         if (!dic.ContainsKey(key1))
-            dic[key1] = comparer == null ? new Dictionary<K2, V>() : new Dictionary<K2, V>(comparer);
+            dic[key1] = comparer == null ? [] : new Dictionary<K2, V>(comparer);
         dic[key1][key2] = value;
     }
 
@@ -351,9 +347,9 @@ static class DictionaryExtensions
         if (key2 == null)
             throw new ArgumentNullException(nameof(key2), "Null values cannot be used for keys in dictionaries.");
         if (!dic.ContainsKey(key1))
-            dic[key1] = new Dictionary<K2, List<V>>();
+            dic[key1] = [];
         if (!dic[key1].ContainsKey(key2))
-            dic[key1][key2] = new List<V>();
+            dic[key1][key2] = [];
         dic[key1][key2].Add(value);
     }
 
@@ -376,7 +372,7 @@ static class DictionaryExtensions
             throw new ArgumentNullException(nameof(dic));
         if (key == null)
             throw new ArgumentNullException(nameof(key), "Null values cannot be used for keys in dictionaries.");
-        return dic.ContainsKey(key) ? (dic[key] = dic[key] + amount) : (dic[key] = amount);
+        return dic.TryGetValue(key, out var old) ? (dic[key] = old + amount) : (dic[key] = amount);
     }
 
     /// <summary>
@@ -399,10 +395,10 @@ static class DictionaryExtensions
             throw new ArgumentNullException(nameof(dic));
         if (key == null)
             throw new ArgumentNullException(nameof(key), "Null values cannot be used for keys in dictionaries.");
-        if (dic.ContainsKey(key))
+        if (dic.TryGetValue(key, out var inner))
         {
-            dic[key].Remove(value);
-            if (dic[key].Count == 0)
+            inner.Remove(value);
+            if (inner.Count == 0)
                 dic.Remove(key);
         }
     }

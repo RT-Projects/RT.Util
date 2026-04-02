@@ -14,6 +14,9 @@ public
 #endif
 static class ObsoleteExtensions
 {
+#pragma warning disable IDE0028 // Simplify collection initialization
+#pragma warning disable IDE0306 // Simplify collection initialization
+
     /// <summary>Creates a <see cref="HashSet{T}"/> from an enumerable collection.</summary>
     public static HashSet<T> ToHashSet<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer = null)
     {
@@ -33,7 +36,7 @@ static class ObsoleteExtensions
         if (count < 0)
             throw new ArgumentOutOfRangeException(nameof(count), "count cannot be negative.");
         if (count == 0)
-            return Enumerable.Empty<T>();
+            return [];
 
         if (source is IList<T> list)
         {

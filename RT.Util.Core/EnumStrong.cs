@@ -1,4 +1,4 @@
-namespace RT.Util;
+﻿namespace RT.Util;
 
 /// <summary>Provides generic versions of some of the static methods of the <see cref="Enum"/> class.</summary>
 public static class EnumStrong
@@ -67,11 +67,7 @@ public static class EnumStrong
     ///     A string containing the name or value to convert.</param>
     /// <returns>
     ///     The value if it was successfully converted; null otherwise.</returns>
-    public static T? TryParse<T>(string value) where T : struct
-    {
-        T result;
-        return Enum.TryParse<T>(value, out result) ? result : (T?) null;
-    }
+    public static T? TryParse<T>(string value) where T : struct => Enum.TryParse<T>(value, out var result) ? result : null;
 
     /// <summary>
     ///     Finds the enum value corresponding to the specified string.</summary>
@@ -83,11 +79,7 @@ public static class EnumStrong
     ///     If true, ignore case; otherwise, regard case.</param>
     /// <returns>
     ///     The value if it was successfully converted; null otherwise.</returns>
-    public static T? TryParse<T>(string value, bool ignoreCase) where T : struct
-    {
-        T result;
-        return Enum.TryParse<T>(value, ignoreCase, out result) ? result : (T?) null;
-    }
+    public static T? TryParse<T>(string value, bool ignoreCase) where T : struct => Enum.TryParse<T>(value, ignoreCase, out var result) ? result : null;
 
     /// <summary>
     ///     Returns the set of enum values from the specified enum type.</summary>
@@ -95,8 +87,5 @@ public static class EnumStrong
     ///     The enum type from which to retrieve the values.</typeparam>
     /// <returns>
     ///     A strongly-typed array containing the enum values from the specified type.</returns>
-    public static T[] GetValues<T>()
-    {
-        return (T[]) Enum.GetValues(typeof(T));
-    }
+    public static T[] GetValues<T>() => (T[]) Enum.GetValues(typeof(T));
 }

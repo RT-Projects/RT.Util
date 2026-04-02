@@ -44,7 +44,7 @@ public sealed class ConsoleColoredString : IEnumerable<ConsoleColoredChar>, IEqu
     public static explicit operator string(ConsoleColoredString input) => input?._text;
 
     /// <summary>Initializes an empty <see cref="ConsoleColoredString"/>.</summary>
-    public ConsoleColoredString() { _text = ""; _foreground = new ConsoleColor?[0]; _background = new ConsoleColor?[0]; }
+    public ConsoleColoredString() { _text = ""; _foreground = []; _background = []; }
 
     /// <summary>
     ///     Constructs a <see cref="ConsoleColoredString"/> with the specified text and the specified colors.</summary>
@@ -1261,7 +1261,7 @@ public struct ConsoleColoredChar(char character, ConsoleColor? foreground, Conso
     /// <remarks>
     ///     The color of each character in the input strings is preserved.</remarks>
     public static ConsoleColoredString operator +(ConsoleColoredChar char1, ConsoleColoredChar char2) =>
-        new(string.Concat(char1.Character, char2.Character), new[] { char1.Color, char2.Color }, new[] { char1.BackgroundColor, char2.BackgroundColor });
+        new(string.Concat(char1.Character, char2.Character), [char1.Color, char2.Color], [char1.BackgroundColor, char2.BackgroundColor]);
 
     /// <summary>
     ///     Concatenates a <see cref="ConsoleColoredChar"/> onto a string and returns a <see cref="ConsoleColoredString"/>.</summary>

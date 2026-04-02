@@ -1,4 +1,4 @@
-namespace RT.Util;
+﻿namespace RT.Util;
 
 public static partial class Ut
 {
@@ -17,8 +17,7 @@ public static partial class Ut
     /// <summary>Returns the number of seconds elapsed since the last call to <see cref="Tic"/>.</summary>
     public static double Toc()
     {
-        long stop;
-        WinAPI.QueryPerformanceCounter(out stop);
+        WinAPI.QueryPerformanceCounter(out var stop);
         return (stop - _start) / (double) WinAPI.PerformanceFreq;
     }
 }
@@ -69,8 +68,7 @@ public class TicTocCycles
     /// <summary>Returns the amount of CPU time consumed by this thread only since the last call to <see cref="Tic"/>.</summary>
     public long Toc()
     {
-        ulong tocCycles;
-        WinAPI.QueryThreadCycleTime(_threadHandle, out tocCycles);
+        WinAPI.QueryThreadCycleTime(_threadHandle, out var tocCycles);
         return (long) tocCycles - (long) _ticCycles - _calibrationCycles;
     }
 

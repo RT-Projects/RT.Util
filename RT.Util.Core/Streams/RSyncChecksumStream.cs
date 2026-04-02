@@ -1,4 +1,4 @@
-namespace RT.Util.Streams;
+﻿namespace RT.Util.Streams;
 
 /// <summary>Calculates RSync checksums over bytes.</summary>
 public sealed class RSyncChecksumCalculator
@@ -36,7 +36,7 @@ public sealed class RSyncChecksumCalculator
     {
         int endoffset = offset + count;
         if (endoffset > buffer.Length || offset < 0)
-            throw new ArgumentOutOfRangeException("The arguments to ProcessBytes() point outside the array.");
+            throw new ArgumentOutOfRangeException(nameof(offset), "The arguments to ProcessBytes() point outside the array.");
 
         if (!_windowFull)
         {
@@ -85,7 +85,7 @@ public sealed class RSyncChecksumCalculator
         get
         {
             uint cs = CurrentChecksum;
-            return new byte[] { (byte) cs, (byte) (cs >> 8), (byte) (cs >> 16), (byte) (cs >> 24) };
+            return [(byte) cs, (byte) (cs >> 8), (byte) (cs >> 16), (byte) (cs >> 24)];
         }
     }
 }
@@ -119,7 +119,7 @@ public sealed class RSyncChecksumCalculatorTimwi
     {
         int endoffset = offset + count;
         if (endoffset > buffer.Length || offset < 0)
-            throw new ArgumentOutOfRangeException("The arguments to ProcessBytes() point outside the array.");
+            throw new ArgumentOutOfRangeException(nameof(buffer), "The arguments to ProcessBytes() point outside the array.");
 
         for (uint i = (uint) offset; i < endoffset; i++)
         {

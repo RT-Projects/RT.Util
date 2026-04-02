@@ -313,7 +313,7 @@ public sealed class TextTable
             do
             {
                 ConsoleColoredString previousLine = currentLine == null ? null : new ConsoleColoredString(currentLine.ToArray());
-                currentLine = new List<ConsoleColoredString>();
+                currentLine = [];
                 anyMoreContentInThisRow = false;
 
                 // If StretchLastCell is true, the last cell is treated as having colspan to the end of the row and will thus complete the render of the row.
@@ -480,7 +480,7 @@ public sealed class TextTable
     private void ensureCell(int col, int row)
     {
         while (row >= _cells.Count)
-            _cells.Add(new List<cell>());
+            _cells.Add([]);
         while (col >= _cells[row].Count)
             _cells[row].Add(null);
     }

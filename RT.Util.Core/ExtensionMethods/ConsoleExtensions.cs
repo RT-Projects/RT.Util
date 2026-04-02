@@ -74,9 +74,9 @@ static class ConsoleExtensions
         if (hangingIndent < 0)
             throw new ArgumentOutOfRangeException(nameof(hangingIndent), hangingIndent, "hangingIndent cannot be negative.");
         if (text == null || text.Length == 0)
-            return Enumerable.Empty<ConsoleColoredString>();
+            return [];
 
-        return StringExtensions.wordWrap(
+        return StringExtensions.WordWrap(
             text.Split(_lineEndings),
             maxWidth,
             hangingIndent,

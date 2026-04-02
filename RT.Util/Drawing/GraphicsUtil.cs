@@ -1,4 +1,4 @@
-using System.Drawing.Drawing2D;
+﻿using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Drawing.Text;
 using System.Text.RegularExpressions;
@@ -136,13 +136,13 @@ public static class GraphicsUtil
     ///     means a 50% blend between source and destination.</param>
     public static void DrawImageAlpha(this Graphics graphics, Image image, Rectangle destRect, float opacity)
     {
-        ColorMatrix matrix = new ColorMatrix(new float[][] {
-            new float[] {1, 0, 0, 0, 0},
-            new float[] {0, 1, 0, 0, 0},
-            new float[] {0, 0, 1, 0, 0},
-            new float[] {0, 0, 0, opacity, 0},
-            new float[] {0, 0, 0, 0, 1}
-        });
+        ColorMatrix matrix = new ColorMatrix([
+            [1, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0],
+            [0, 0, 1, 0, 0],
+            [0, 0, 0, opacity, 0],
+            [0, 0, 0, 0, 1]
+        ]);
         ImageAttributes attr = new ImageAttributes();
         attr.SetColorMatrix(matrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
         graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, attr);

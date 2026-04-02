@@ -1,4 +1,4 @@
-namespace RT.Util.Controls;
+﻿namespace RT.Util.Controls;
 
 /// <summary>
 ///     This control enables the user to specify a hotkey combination by pressing it on the keyboard. For exmaple, if the user
@@ -61,7 +61,7 @@ public sealed class HotkeyEdit : TextBox
         get { return _lastKey; }
     }
 
-    private void SetText()
+    private void setText()
     {
         if (_lastNone && !_lastShift && !_lastCtrl && !_lastAlt)
         {
@@ -77,25 +77,23 @@ public sealed class HotkeyEdit : TextBox
 
         if (!_lastNone)
         {
-            switch (_lastKey)
+            s += _lastKey switch
             {
-                case Keys.D0: s += "0"; break;
-                case Keys.D1: s += "1"; break;
-                case Keys.D2: s += "2"; break;
-                case Keys.D3: s += "3"; break;
-                case Keys.D4: s += "4"; break;
-                case Keys.D5: s += "5"; break;
-                case Keys.D6: s += "6"; break;
-                case Keys.D7: s += "7"; break;
-                case Keys.D8: s += "8"; break;
-                case Keys.D9: s += "9"; break;
-                case Keys.ShiftKey: s += "Shift"; break;
-                case Keys.ControlKey: s += "Control"; break;
-                case Keys.Menu: s += "Alt"; break;
-                default:
-                    s += _lastKey.ToString();
-                    break;
-            }
+                Keys.D0 => "0",
+                Keys.D1 => "1",
+                Keys.D2 => "2",
+                Keys.D3 => "3",
+                Keys.D4 => "4",
+                Keys.D5 => "5",
+                Keys.D6 => "6",
+                Keys.D7 => "7",
+                Keys.D8 => "8",
+                Keys.D9 => "9",
+                Keys.ShiftKey => "Shift",
+                Keys.ControlKey => "Control",
+                Keys.Menu => "Alt",
+                _ => _lastKey.ToString(),
+            };
         }
 
         Text = s;
@@ -130,7 +128,7 @@ public sealed class HotkeyEdit : TextBox
         }
 
         // Update display etc
-        SetText();
+        setText();
         e.Handled = true;
     }
 
@@ -146,7 +144,7 @@ public sealed class HotkeyEdit : TextBox
         }
 
         // Update display etc
-        SetText();
+        setText();
         e.Handled = true;
     }
 

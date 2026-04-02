@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Util;
@@ -24,8 +24,7 @@ public abstract class Stopwatch
     {
         get
         {
-            if (_globalStopwatch == null)
-                _globalStopwatch = new StopwatchReal();
+            _globalStopwatch ??= new StopwatchReal();
             return _globalStopwatch;
         }
     }
@@ -52,7 +51,7 @@ public sealed class StopwatchReal : Stopwatch
     public DateTime StartTime = DateTime.Now;
 
     /// <summary>Remembers the events as they happen.</summary>
-    public List<StopwatchElement> Elements = new List<StopwatchElement>();
+    public List<StopwatchElement> Elements = [];
 
     /// <summary>
     ///     Logs an event.</summary>

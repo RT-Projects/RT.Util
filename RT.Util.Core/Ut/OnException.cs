@@ -1,4 +1,4 @@
-namespace RT.Util;
+﻿namespace RT.Util;
 
 public static partial class Ut
 {
@@ -85,8 +85,7 @@ public static partial class Ut
             attempts--;
             try { action(); return; }
             catch { }
-            if (onException != null)
-                onException();
+            onException?.Invoke();
             Thread.Sleep(delayMs);
         }
         action();
@@ -131,8 +130,7 @@ public static partial class Ut
             attempts--;
             try { return func(); }
             catch { }
-            if (onException != null)
-                onException();
+            onException?.Invoke();
             Thread.Sleep(delayMs);
         }
         return func();

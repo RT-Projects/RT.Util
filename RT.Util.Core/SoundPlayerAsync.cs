@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace RT.Util;
 
@@ -10,10 +10,10 @@ public sealed class SoundPlayerAsync : IDisposable
     /// <summary>Gets or sets the bytes representing the wave data to be played.</summary>
     public byte[] BytesToPlay
     {
-        get { return _bytesToPlay; }
+        get => _bytesToPlay;
         set
         {
-            FreeHandle();
+            freeHandle();
             _bytesToPlay = value;
         }
     }
@@ -34,47 +34,38 @@ public sealed class SoundPlayerAsync : IDisposable
     /// <summary>Loads the wave data to play from the specified stream. The stream can be closed immediately afterwards.</summary>
     public void LoadStream(System.IO.Stream stream)
     {
-        byte[] bytesToPlay = new byte[stream.Length];
+        var bytesToPlay = new byte[stream.Length];
         stream.Read(bytesToPlay, 0, (int) stream.Length);
         BytesToPlay = bytesToPlay;
     }
 
     /// <summary>Plays the loaded file once, asynchronously.</summary>
-    public void Play()
-    {
-        PlayASync(NativeMethods.SoundFlags.SND_ASYNC);
-    }
+    public void Play() => playASync(nativeMethods.SoundFlags.SND_ASYNC);
 
     /// <summary>Plays the loaded file forever in a loop, asynchronously. This class provides no methods for stopping this.</summary>
-    public void PlayLoop()
-    {
-        PlayASync(NativeMethods.SoundFlags.SND_ASYNC | NativeMethods.SoundFlags.SND_LOOP);
-    }
+    public void PlayLoop() => playASync(nativeMethods.SoundFlags.SND_ASYNC | nativeMethods.SoundFlags.SND_LOOP);
 
-    private void PlayASync(NativeMethods.SoundFlags flags)
+    private void playASync(nativeMethods.SoundFlags flags)
     {
-        FreeHandle();
-        flags |= NativeMethods.SoundFlags.SND_ASYNC;
+        freeHandle();
+        flags |= nativeMethods.SoundFlags.SND_ASYNC;
         if (BytesToPlay != null)
         {
             _gcHandle = GCHandle.Alloc(BytesToPlay, GCHandleType.Pinned);
-            flags |= NativeMethods.SoundFlags.SND_MEMORY;
-            NativeMethods.PlaySound(_gcHandle.Value.AddrOfPinnedObject(), (UIntPtr) 0, (uint) flags);
+            flags |= nativeMethods.SoundFlags.SND_MEMORY;
+            nativeMethods.PlaySound(_gcHandle.Value.AddrOfPinnedObject(), (UIntPtr) 0, (uint) flags);
         }
         else
         {
-            NativeMethods.PlaySound((byte[]) null, (UIntPtr) 0, (uint) flags);
+            nativeMethods.PlaySound((byte[]) null, (UIntPtr) 0, (uint) flags);
         }
     }
 
-    private void FreeHandle()
+    private void freeHandle()
     {
-        NativeMethods.PlaySound((byte[]) null, (UIntPtr) 0, (uint) 0);
-        if (_gcHandle != null)
-        {
-            _gcHandle.Value.Free();
-            _gcHandle = null;
-        }
+        nativeMethods.PlaySound((byte[]) null, (UIntPtr) 0, 0);
+        _gcHandle?.Free();
+        _gcHandle = null;
     }
 
     #region IDisposable Members
@@ -82,39 +73,22 @@ public sealed class SoundPlayerAsync : IDisposable
     /// <summary>Disposes of the class</summary>
     public void Dispose()
     {
-        Dispose(true);
-    }
-
-    private void Dispose(bool disposing)
-    {
         BytesToPlay = null;
-        if (disposing)
-        {
-            GC.SuppressFinalize(this);
-        }
-    }
-
-    /// <summary>Destroys the class</summary>
-    ~SoundPlayerAsync()
-    {
-        Dispose(false);
+        GC.SuppressFinalize(this);
     }
 
     #endregion
 
-    private static class NativeMethods
+    private static class nativeMethods
     {
         [DllImport("winmm.dll", SetLastError = true)]
-        public static extern bool PlaySound(string pszSound,
-         System.UIntPtr hmod, uint fdwSound);
+        public static extern bool PlaySound(string pszSound, UIntPtr hmod, uint fdwSound);
 
         [DllImport("winmm.dll", SetLastError = true)]
-        public static extern bool PlaySound(byte[] ptrToSound,
-         System.UIntPtr hmod, uint fdwSound);
+        public static extern bool PlaySound(byte[] ptrToSound, UIntPtr hmod, uint fdwSound);
 
         [DllImport("winmm.dll", SetLastError = true)]
-        public static extern bool PlaySound(IntPtr ptrToSound,
-         System.UIntPtr hmod, uint fdwSound);
+        public static extern bool PlaySound(IntPtr ptrToSound, UIntPtr hmod, uint fdwSound);
 
         [Flags]
         public enum SoundFlags : int

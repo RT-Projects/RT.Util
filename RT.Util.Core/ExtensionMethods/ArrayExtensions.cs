@@ -263,9 +263,9 @@ static class ArrayExtensions
         if (findWhat == null)
             throw new ArgumentNullException(nameof(findWhat));
         if (startIndex < 0 || startIndex > sourceArray.Length)
-            throw new ArgumentOutOfRangeException("startIndex");
+            throw new ArgumentOutOfRangeException(nameof(startIndex));
         if (sourceLength != null && (sourceLength < 0 || sourceLength + startIndex > sourceArray.Length))
-            throw new ArgumentOutOfRangeException("sourceLength");
+            throw new ArgumentOutOfRangeException(nameof(sourceLength));
 
         var maxIndex = (sourceLength == null ? sourceArray.Length : startIndex + sourceLength.Value) - findWhat.Length;
         for (int i = startIndex; i <= maxIndex; i++)

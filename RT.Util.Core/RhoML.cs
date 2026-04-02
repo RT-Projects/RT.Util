@@ -129,13 +129,8 @@ public sealed class RhoText : RhoNode
     /// <summary>Gets or sets the text string represented by this instance. Not null.</summary>
     public string Text
     {
-        get { return _text; }
-        set
-        {
-            if (value == null)
-                throw new ArgumentNullException(nameof(value));
-            _text = value;
-        }
+        get => _text;
+        set => _text = value ?? throw new ArgumentNullException(nameof(value));
     }
 
     private string _text;
@@ -143,9 +138,7 @@ public sealed class RhoText : RhoNode
     /// <summary>Constructor.</summary>
     public RhoText(string text)
     {
-        if (text == null)
-            throw new ArgumentNullException(nameof(text));
-        Text = text;
+        Text = text ?? throw new ArgumentNullException(nameof(text));
     }
 
     /// <summary>
@@ -169,8 +162,8 @@ public sealed class RhoElement : RhoNode
     ///     element. Attributes whose value was omitted will have the value of null in this dictionary.</summary>
     public IDictionary<string, string> Attributes
     {
-        get { return _attributes; }
-        set { if (value == null) throw new ArgumentNullException(nameof(value)); _attributes = value; }
+        get => _attributes;
+        set => _attributes = value ?? throw new ArgumentNullException(nameof(value));
     }
     /// <summary>
     ///     Gets or sets a read-only list of child elements. Not null. May be empty, or contain any <see cref="RhoNode"/>
@@ -178,7 +171,7 @@ public sealed class RhoElement : RhoNode
     public IList<RhoNode> Children
     {
         get { return _children; }
-        set { if (value == null) throw new ArgumentNullException(nameof(value)); _children = value; }
+        set { _children = value ?? throw new ArgumentNullException(nameof(value)); }
     }
 
     private IDictionary<string, string> _attributes;
@@ -188,7 +181,7 @@ public sealed class RhoElement : RhoNode
     public RhoElement()
     {
         _attributes = new Dictionary<string, string>();
-        _children = new List<RhoNode>();
+        _children = [];
     }
 
     /// <summary>Constructor.</summary>
@@ -222,12 +215,11 @@ public sealed class RhoElement : RhoNode
             var queue = new Queue<RhoNode>();
             queue.EnqueueRange(this.Children);
 
-            while (queue.Any())
+            while (queue.Count > 0)
             {
                 var cur = queue.Dequeue();
                 yield return cur;
-                var tag = cur as RhoElement;
-                if (tag != null)
+                if (cur is RhoElement tag)
                     queue.EnqueueRange(tag.Children);
             }
         }
@@ -267,15 +259,10 @@ public sealed class RhoElement : RhoNode
             builder.Append("{}");
     }
 
-    private string escapedAttrString(string str)
-    {
-        if (str.Length == 0)
-            return "";
-        if (str[0] == ' ' || str[str.Length - 1] == ' ' || str.Any(c => c == '}' || c == '=' || c == ',' || c == '`' || c == '\r' || c == '\n' || c == '\t'))
-            return "`" + str.Replace("`", "``") + "`";
-        else
-            return str;
-    }
+    private static string escapedAttrString(string str) =>
+        str.Length == 0 ? "" :
+        str[0] == ' ' || str[str.Length - 1] == ' ' || str.Any(c => c is '}' or '=' or ',' or '`' or '\r' or '\n' or '\t') ? $"`{str.Replace("`", "``")}`" :
+        str;
 }
 
 internal sealed class RhoParserState
@@ -284,7 +271,7 @@ internal sealed class RhoParserState
     public int Pos;
 
     private OffsetToLineCol _offsetConverter;
-    public OffsetToLineCol OffsetConverter { get { if (_offsetConverter == null) _offsetConverter = new OffsetToLineCol(Input); return _offsetConverter; } }
+    public OffsetToLineCol OffsetConverter { get { _offsetConverter ??= new OffsetToLineCol(Input); return _offsetConverter; } }
 
     private RhoParserState() { }
 
@@ -294,24 +281,21 @@ internal sealed class RhoParserState
         Pos = 0;
     }
 
-    public RhoParserState Clone()
+    public RhoParserState Clone() => new()
     {
-        var result = new RhoParserState();
-        result.Input = Input;
-        result.Pos = Pos;
-        result._offsetConverter = _offsetConverter;
-        return result;
-    }
+        Input = Input,
+        Pos = Pos,
+        _offsetConverter = _offsetConverter
+    };
 
-    public char? Cur { get { return Pos >= Input.Length ? null : (char?) Input[Pos]; } }
-    public char? Next { get { return Pos + 1 >= Input.Length ? null : (char?) Input[Pos + 1]; } }
+    public char? Cur => Pos >= Input.Length ? null : Input[Pos];
+    public char? Next => Pos + 1 >= Input.Length ? null : Input[Pos + 1];
 
     public string Snippet
     {
         get
         {
-            int line, col;
-            OffsetConverter.GetLineAndColumn(Pos, out line, out col);
+            OffsetConverter.GetLineAndColumn(Pos, out var line, out var col);
             return "Before: {2}   After: {3}   At: {0},{1}".Fmt(line, col, Input.SubstringSafe(Pos - 15, 15), Input.SubstringSafe(Pos, 15));
         }
     }

@@ -3,6 +3,8 @@ using System.Windows.Markup;
 
 namespace RT.KitchenSink.Fonts;
 
+#pragma warning disable IDE1006 // Naming Styles
+
 /// <summary>Provides some assorted functionality relating to fonts.</summary>
 public static class FontUtil
 {
@@ -11,21 +13,19 @@ public static class FontUtil
     {
         if (_monospaceFontNames == null)
         {
-            _monospaceFontNames = new HashSet<string>();
-            LOGFONT lf = createLogFont("");
+            _monospaceFontNames = [];
+            LOGFONT lf = createLogFont();
             IntPtr plogFont = Marshal.AllocHGlobal(Marshal.SizeOf(lf));
             Marshal.StructureToPtr(lf, plogFont, true);
 
             int ret = 0;
             try
             {
-                using (var bmp = new Bitmap(1024, 768, System.Drawing.Imaging.PixelFormat.Format32bppArgb))
-                using (var graphics = Graphics.FromImage(bmp))
-                {
-                    IntPtr hdc = graphics.GetHdc();
-                    ret = EnumFontFamiliesEx(hdc, plogFont, enumFontsCallback, IntPtr.Zero, 0);
-                    graphics.ReleaseHdc(hdc);
-                }
+                using var bmp = new Bitmap(1024, 768, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                using var graphics = Graphics.FromImage(bmp);
+                IntPtr hdc = graphics.GetHdc();
+                ret = EnumFontFamiliesEx(hdc, plogFont, enumFontsCallback, IntPtr.Zero, 0);
+                graphics.ReleaseHdc(hdc);
             }
             finally
             {
@@ -68,12 +68,10 @@ public static class FontUtil
     {
         var family = new System.Windows.Media.FontFamily(fontFamily);
         var typeface = family.GetTypefaces().First();
-        ushort glyphIndex;
-        System.Windows.Media.GlyphTypeface glyph;
-        if (!typeface.TryGetGlyphTypeface(out glyph))
+        if (!typeface.TryGetGlyphTypeface(out var glyph))
             yield break;
         foreach (var ch in characters ?? Enumerable.Range(0, 0x110000))
-            if (glyph.CharacterToGlyphMap.TryGetValue(ch, out glyphIndex))
+            if (glyph.CharacterToGlyphMap.ContainsKey(ch))
                 yield return ch;
     }
 
@@ -247,21 +245,6 @@ public static class FontUtil
         public string elfScript;
     }
 
-    private const byte DEFAULT_CHARSET = 1;
-    private const byte SHIFTJIS_CHARSET = 128;
-    private const byte JOHAB_CHARSET = 130;
-    private const byte EASTEUROPE_CHARSET = 238;
-
-    private const byte DEFAULT_PITCH = 0;
-    private const byte FIXED_PITCH = 1;
-    private const byte VARIABLE_PITCH = 2;
-    private const byte FF_DONTCARE = (0 << 4);
-    private const byte FF_ROMAN = (1 << 4);
-    private const byte FF_SWISS = (2 << 4);
-    private const byte FF_MODERN = (3 << 4);
-    private const byte FF_SCRIPT = (4 << 4);
-    private const byte FF_DECORATIVE = (5 << 4);
-
     private delegate int EnumFontExDelegate(ref ENUMLOGFONTEX lpelfe, ref NEWTEXTMETRICEX lpntme, int FontType, int lParam);
 
     private static int enumFontsCallback(ref ENUMLOGFONTEX lpelfe, ref NEWTEXTMETRICEX lpntme, int FontType, int lParam)
@@ -271,23 +254,21 @@ public static class FontUtil
         return 1;
     }
 
-    private static LOGFONT createLogFont(string fontname)
+    private static LOGFONT createLogFont() => new()
     {
-        LOGFONT lf = new LOGFONT();
-        lf.lfHeight = 0;
-        lf.lfWidth = 0;
-        lf.lfEscapement = 0;
-        lf.lfOrientation = 0;
-        lf.lfWeight = 0;
-        lf.lfItalic = false;
-        lf.lfUnderline = false;
-        lf.lfStrikeOut = false;
-        lf.lfCharSet = FontCharSet.DEFAULT_CHARSET;
-        lf.lfOutPrecision = 0;
-        lf.lfClipPrecision = 0;
-        lf.lfQuality = 0;
-        lf.lfPitchAndFamily = FontPitchAndFamily.FF_DONTCARE;
-        lf.lfFaceName = "";
-        return lf;
-    }
+        lfHeight = 0,
+        lfWidth = 0,
+        lfEscapement = 0,
+        lfOrientation = 0,
+        lfWeight = 0,
+        lfItalic = false,
+        lfUnderline = false,
+        lfStrikeOut = false,
+        lfCharSet = FontCharSet.DEFAULT_CHARSET,
+        lfOutPrecision = 0,
+        lfClipPrecision = 0,
+        lfQuality = 0,
+        lfPitchAndFamily = FontPitchAndFamily.FF_DONTCARE,
+        lfFaceName = ""
+    };
 }

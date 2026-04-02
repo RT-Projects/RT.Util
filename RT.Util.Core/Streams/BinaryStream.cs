@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Streams;
@@ -10,23 +10,14 @@ namespace RT.Util.Streams;
 ///         This class does not use any buffering of its own.</para>
 ///     <para>
 ///         It is permissible to seek, read from, and write to the underlying stream.</para></remarks>
-public sealed class BinaryStream : Stream
+/// <param name="underlyingStream">
+///     Provides an underlying stream from which to read and to which to write.</param>
+public sealed class BinaryStream(Stream underlyingStream) : Stream
 {
     private BinaryReader _reader;
     private BinaryWriter _writer;
-    private Stream _stream;
+    private Stream _stream = underlyingStream ?? throw new ArgumentNullException(nameof(underlyingStream));
     private byte[] _buffer = new byte[8];
-
-    /// <summary>
-    ///     Constructs a <see cref="BinaryStream"/> instance.</summary>
-    /// <param name="underlyingStream">
-    ///     Provides an underlying stream from which to read and to which to write.</param>
-    public BinaryStream(Stream underlyingStream)
-    {
-        if (underlyingStream == null)
-            throw new ArgumentNullException(nameof(underlyingStream));
-        _stream = underlyingStream;
-    }
 
     /// <summary>
     ///     Releases the unmanaged resources used by the stream and optionally releases the managed resources.</summary>
@@ -36,11 +27,11 @@ public sealed class BinaryStream : Stream
     {
         if (disposing)
         {
-            if (_reader != null) _reader.Dispose();
+            _reader?.Dispose();
             _reader = null;
-            if (_writer != null) _writer.Dispose();
+            _writer?.Dispose();
             _writer = null;
-            if (_stream != null) _stream.Dispose();
+            _stream?.Dispose();
             _stream = null;
             _buffer = null;
         }
@@ -48,26 +39,10 @@ public sealed class BinaryStream : Stream
     }
 
     /// <summary>Gets an instance of <see cref="BinaryReader"/> for the underlying stream.</summary>
-    private BinaryReader reader
-    {
-        get
-        {
-            if (_reader == null)
-                _reader = new BinaryReader(_stream, Encoding.UTF8);
-            return _reader;
-        }
-    }
+    private BinaryReader reader => _reader ??= new BinaryReader(_stream, Encoding.UTF8);
 
     /// <summary>Gets an instance of <see cref="BinaryWriter"/> for the underlying stream.</summary>
-    private BinaryWriter writer
-    {
-        get
-        {
-            if (_writer == null)
-                _writer = new BinaryWriter(_stream, Encoding.UTF8);
-            return _writer;
-        }
-    }
+    private BinaryWriter writer => _writer ??= new BinaryWriter(_stream, Encoding.UTF8);
 
     private void readToBuffer(int bytes)
     {

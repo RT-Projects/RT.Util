@@ -1,4 +1,4 @@
-namespace RT.Util.Controls;
+﻿namespace RT.Util.Controls;
 
 /// <summary>SplitContainerEx provides such "advanced" features as painting the bloody splitter.</summary>
 public sealed partial class SplitContainerEx : SplitContainer
@@ -57,8 +57,7 @@ public sealed partial class SplitContainerEx : SplitContainer
     {
         if (_settings != null && Visible)
             _settings.PositionPercent = (double) SplitterDistance / Width;
-        if (SplitterMoved != null)
-            SplitterMoved(sender, e);
+        SplitterMoved?.Invoke(sender, e);
     }
 
     /// <summary>Holds the settings of the <see cref="SplitContainerEx"/>.</summary>

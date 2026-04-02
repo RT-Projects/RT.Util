@@ -1,4 +1,4 @@
-namespace RT.KitchenSink;
+﻿namespace RT.KitchenSink;
 
 /// <summary>
 ///     Incrementally accumulates basic statistics about a value, one observation at a time, making current estimates of the
@@ -153,7 +153,7 @@ public class ValueStatDec
 
         ObservationCount += 1;
         decimal delta = value - Mean;
-        Mean = Mean + delta / ObservationCount;
-        _m2 = _m2 + delta * (value - Mean);
+        Mean += delta / ObservationCount;
+        _m2 += delta * (value - Mean);
     }
 }

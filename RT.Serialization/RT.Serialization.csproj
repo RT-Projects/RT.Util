@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
     <DefineConstants>EXPORT_EXACTCONVERT</DefineConstants>
-    <LangVersion>10</LangVersion>
+    <LangVersion>latest</LangVersion>
 
     <Version>1.0.0.9999</Version>
     <Authors>Timwi;rstarkov;caesay</Authors>

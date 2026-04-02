@@ -1,4 +1,4 @@
-namespace RT.Util.Collections;
+﻿namespace RT.Util.Collections;
 
 /// <summary>
 ///     Encapsulates a binary value 128 bits long. See Remarks.</summary>
@@ -9,7 +9,7 @@ namespace RT.Util.Collections;
 public struct Bin128
 {
     /// <summary>Gets a 128-bit binary value consisting of all zeroes.</summary>
-    public static Bin128 Zero = new Bin128();
+    public static readonly Bin128 Zero = new();
 
     private ulong _a, _b;
 
@@ -22,22 +22,22 @@ public struct Bin128
     public Bin128(byte[] bytes, int offset = 0)
     {
         if (bytes == null || offset < 0 || offset + 16 > bytes.Length)
-            throw new ArgumentException();
-        _a = (ulong) (uint) (bytes[00] | (bytes[01] << 8) | (bytes[02] << 16) | (bytes[03] << 24)) | ((ulong) (uint) (bytes[04] | (bytes[05] << 8) | (bytes[06] << 16) | (bytes[07] << 24)) << 32);
-        _b = (ulong) (uint) (bytes[08] | (bytes[09] << 8) | (bytes[10] << 16) | (bytes[11] << 24)) | ((ulong) (uint) (bytes[12] | (bytes[13] << 8) | (bytes[14] << 16) | (bytes[15] << 24)) << 32);
+            throw new ArgumentException("Arguments are out of range.", nameof(offset));
+        _a = (uint) (bytes[00] | (bytes[01] << 8) | (bytes[02] << 16) | (bytes[03] << 24)) | ((ulong) (uint) (bytes[04] | (bytes[05] << 8) | (bytes[06] << 16) | (bytes[07] << 24)) << 32);
+        _b = (uint) (bytes[08] | (bytes[09] << 8) | (bytes[10] << 16) | (bytes[11] << 24)) | ((ulong) (uint) (bytes[12] | (bytes[13] << 8) | (bytes[14] << 16) | (bytes[15] << 24)) << 32);
     }
 
     /// <summary>Compares the two values and returns true iff they are equal.</summary>
-    public static bool operator ==(Bin128 v1, Bin128 v2) { return (v1._a == v2._a) && (v1._b == v2._b); }
+    public static bool operator ==(Bin128 v1, Bin128 v2) => (v1._a == v2._a) && (v1._b == v2._b);
     /// <summary>Compares the two values and returns true iff they are different.</summary>
-    public static bool operator !=(Bin128 v1, Bin128 v2) { return (v1._a != v2._a) || (v1._b != v2._b); }
+    public static bool operator !=(Bin128 v1, Bin128 v2) => (v1._a != v2._a) || (v1._b != v2._b);
     /// <summary>Compares an object to this value and returns true iff it's a Bin128 value that's equal.</summary>
-    public override bool Equals(object other) { return other is Bin128 && this == (Bin128) other; }
+    public override readonly bool Equals(object other) => other is Bin128 bin && this == bin;
     /// <summary>Gets the hash code for this value.</summary>
-    public override int GetHashCode() { return _a.GetHashCode() * 5779 + _b.GetHashCode(); }
+    public override readonly int GetHashCode() => _a.GetHashCode() * 5779 + _b.GetHashCode();
 
     /// <summary>Returns the binary value as a byte array. This method is not very efficient.</summary>
-    public byte[] ToArray()
+    public readonly byte[] ToArray()
     {
         var ms = new MemoryStream();
         Write(ms);
@@ -45,19 +45,19 @@ public struct Bin128
     }
 
     /// <summary>Converts the binary value to a hexadecimal string representation.</summary>
-    public override string ToString()
+    public override readonly string ToString()
     {
         return ToArray().ToHex();
     }
 
     /// <summary>Writes the value to the specified stream as 16 bytes.</summary>
-    public void Write(Stream stream)
+    public readonly void Write(Stream stream)
     {
         Write(new BinaryWriter(stream));
     }
 
     /// <summary>Writes the value to the specified binary writer as 16 bytes.</summary>
-    public void Write(BinaryWriter bw)
+    public readonly void Write(BinaryWriter bw)
     {
         bw.Write(_a);
         bw.Write(_b);
@@ -70,11 +70,9 @@ public struct Bin128
     }
 
     /// <summary>Reads a 128-bit binary value from the specified binary reader.</summary>
-    public static Bin128 Read(BinaryReader br)
+    public static Bin128 Read(BinaryReader br) => new()
     {
-        var result = new Bin128();
-        result._a = br.ReadUInt64();
-        result._b = br.ReadUInt64();
-        return result;
-    }
+        _a = br.ReadUInt64(),
+        _b = br.ReadUInt64()
+    };
 }

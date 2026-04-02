@@ -1,4 +1,4 @@
-using RT.Util.ExtensionMethods;
+﻿using RT.Util.ExtensionMethods;
 
 namespace RT.Util;
 
@@ -70,11 +70,11 @@ public static partial class Ut
             yield return (old[i], DiffOp.None);
     }
 
-    private sealed class DiffSeqLink
+    private sealed class diffSeqLink
     {
         public int x;
         public int y;
-        public DiffSeqLink prev;
+        public diffSeqLink prev;
         public override string ToString() => "{0}, {1}{2}".Fmt(x, y, prev == null ? null : " >");
     }
 
@@ -85,8 +85,8 @@ public static partial class Ut
             if (predicate == null || predicate(newa[i]))
                 newhash.AddSafe(newa[i], i);
 
-        var sequences = new DiffSeqLink[olda.Count - startMatch - endMatch + 1];
-        var newSequences = new DiffSeqLink[olda.Count - startMatch - endMatch + 1];
+        var sequences = new diffSeqLink[olda.Count - startMatch - endMatch + 1];
+        var newSequences = new diffSeqLink[olda.Count - startMatch - endMatch + 1];
         var seqCount = 0;
 
         for (int xindex = startMatch; xindex < olda.Count - endMatch; xindex++)
@@ -105,7 +105,7 @@ public static partial class Ut
                 if (((k == seqCount) || (yindex < sequences[k].y)) &&
                     ((k == 0) || (yindex > last.y)))
                 {
-                    newSequences[k] = new DiffSeqLink { x = xindex, y = yindex, prev = last };
+                    newSequences[k] = new diffSeqLink { x = xindex, y = yindex, prev = last };
                     k++;
                     if (k > seqCount)
                     {
@@ -119,9 +119,9 @@ public static partial class Ut
                 Array.Copy(newSequences, sequences, k);
         }
 
-        DiffSeqLink[] sequence = new DiffSeqLink[seqCount + 1];
+        diffSeqLink[] sequence = new diffSeqLink[seqCount + 1];
         var index = 0;
-        var sequenceRev = new DiffSeqLink { x = olda.Count - endMatch, y = newa.Count - endMatch, prev = seqCount > 0 ? sequences[seqCount - 1] : null };
+        var sequenceRev = new diffSeqLink { x = olda.Count - endMatch, y = newa.Count - endMatch, prev = seqCount > 0 ? sequences[seqCount - 1] : null };
         while (sequenceRev != null)
         {
             sequence[seqCount - index] = sequenceRev;

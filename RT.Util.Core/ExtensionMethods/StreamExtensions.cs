@@ -22,15 +22,13 @@ static class StreamExtensions
         else
         {
             byte[] buffer = new byte[32768];
-            using (MemoryStream ms = new MemoryStream())
+            using MemoryStream ms = new MemoryStream();
+            while (true)
             {
-                while (true)
-                {
-                    int read = stream.Read(buffer, 0, buffer.Length);
-                    if (read <= 0)
-                        return ms.ToArray();
-                    ms.Write(buffer, 0, read);
-                }
+                int read = stream.Read(buffer, 0, buffer.Length);
+                if (read <= 0)
+                    return ms.ToArray();
+                ms.Write(buffer, 0, read);
             }
         }
     }
@@ -42,15 +40,13 @@ static class StreamExtensions
             return await stream.ReadAsync((int) (stream.Length - stream.Position), token);
 
         byte[] buffer = new byte[32768];
-        using (MemoryStream ms = new MemoryStream())
+        using MemoryStream ms = new MemoryStream();
+        while (true)
         {
-            while (true)
-            {
-                int read = await stream.ReadAsync(buffer, 0, buffer.Length, token ?? CancellationToken.None).ConfigureAwait(false);
-                if (read <= 0)
-                    return ms.ToArray();
-                ms.Write(buffer, 0, read);
-            }
+            int read = await stream.ReadAsync(buffer, 0, buffer.Length, token ?? CancellationToken.None).ConfigureAwait(false);
+            if (read <= 0)
+                return ms.ToArray();
+            ms.Write(buffer, 0, read);
         }
     }
 
@@ -102,30 +98,26 @@ static class StreamExtensions
     ///     The text read from the stream.</returns>
     public static string ReadAllText(this Stream stream, Encoding encoding = null)
     {
-        using (var sr = new StreamReader(stream, encoding ?? Encoding.UTF8))
-            return sr.ReadToEnd();
+        using var sr = new StreamReader(stream, encoding ?? Encoding.UTF8);
+        return sr.ReadToEnd();
     }
 
     /// <summary>
     ///     Reads all bytes from the current Stream and converts them into text using the specified encoding.</summary>
     /// <param name="stream">
     ///     Stream to read from.</param>
-    /// <param name="encoding">
-    ///     Encoding to expect the text to be in. If <c>null</c> then the UTF-8 encoding is used.</param>
     /// <param name="token">
     ///     A cancellation token for this async task.</param>
     /// <returns>
     ///     The text read from the stream.</returns>
-    public static async Task<string> ReadAllTextAsync(this Stream stream, Encoding encoding = null, CancellationToken? token = null)
+    public static async Task<string> ReadAllTextAsync(this Stream stream, CancellationToken? token = null)
     {
-        byte[] buffer = new byte[32768];
-        using (MemoryStream ms = new MemoryStream())
-        {
-            int read;
-            while ((read = await stream.ReadAsync(buffer, 0, buffer.Length, token ?? CancellationToken.None).ConfigureAwait(false)) > 0)
-                ms.Write(buffer, 0, read);
-            return ms.ToArray().FromUtf8();
-        }
+        var buffer = new byte[32768];
+        using var ms = new MemoryStream();
+        int read;
+        while ((read = await stream.ReadAsync(buffer, 0, buffer.Length, token ?? CancellationToken.None).ConfigureAwait(false)) > 0)
+            ms.Write(buffer, 0, read);
+        return ms.ToArray().FromUtf8();
     }
 
     /// <summary>
@@ -395,46 +387,36 @@ static class StreamExtensions
 
     private static byte[][] _decimalOptimEncodeLUT;
 
-    private static byte[][] decimalOptimEncodeLUT
-    {
-        get
-        {
-            T[] newArray<T>(params T[] array) => array;
-            if (_decimalOptimEncodeLUT == null)
-                _decimalOptimEncodeLUT = newArray(
-                    new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 },
-                    new byte[] { 255, 13, 14, 15, 16, 17, 255, 255, 255, 255, 255, 255, 18 },
-                    new byte[] { 255, 19, 20, 21, 22, 23, 255, 255, 255, 255, 255, 255, 24 },
-                    new byte[] { 255, 25, 26, 27, 28, 29, 255, 255, 255, 255, 255, 255, 30 },
-                    new byte[] { 255, 31, 32, 33, 34, 35, 36, 255, 255, 255, 255, 255, 37 },
-                    new byte[] { 255, 38, 39, 40, 41, 42, 43, 255, 255, 255, 255, 255, 44 },
-                    new byte[] { 255, 255, 45, 46, 47, 48, 49, 255, 255, 255, 255, 255, 50 },
-                    new byte[] { 255, 255, 51, 52, 53, 54, 55, 255, 255, 255, 255, 255, 56 },
-                    new byte[] { 255, 255, 255, 57, 58, 255, 255, 59, 255, 255, 255, 255, 60 },
-                    new byte[] { 255, 255, 255, 61, 62, 255, 255, 255, 63, 255, 255, 255, 64 },
-                    new byte[] { 255, 255, 255, 65, 255, 66, 255, 255, 67, 255, 255, 255, 68 },
-                    new byte[] { 255, 255, 255, 69, 255, 255, 70, 255, 71, 255, 255, 255, 72 },
-                    new byte[] { 255, 255, 255, 73, 255, 255, 74, 255, 75, 255, 255, 255, 76 },
-                    new byte[] { 255, 255, 255, 77, 255, 255, 78, 255, 79, 255, 255, 255, 80 },
-                    new byte[] { 255, 255, 255, 81, 255, 255, 82, 255, 83, 255, 255, 255, 84 },
-                    new byte[] { 255, 255, 255, 85, 255, 255, 255, 86, 255, 87, 255, 255, 88 },
-                    new byte[] { 255, 255, 255, 89, 255, 255, 255, 255, 255, 90, 255, 255, 91 },
-                    new byte[] { 255, 255, 255, 255, 92, 255, 255, 255, 255, 93, 255, 255, 94 },
-                    new byte[] { 255, 255, 255, 255, 255, 95, 255, 255, 255, 96, 255, 255, 97 },
-                    new byte[] { 255, 255, 255, 255, 255, 255, 98, 255, 255, 255, 255, 99, 100 },
-                    new byte[] { 255, 255, 255, 255, 255, 255, 101, 255, 255, 255, 255, 102, 103 },
-                    new byte[] { 255, 255, 255, 255, 255, 255, 104, 255, 255, 255, 255, 105, 106 },
-                    new byte[] { 255, 255, 255, 255, 255, 255, 255, 107, 255, 255, 255, 108, 109 },
-                    new byte[] { 255, 255, 255, 255, 255, 255, 255, 255, 110, 255, 255, 111, 112 },
-                    new byte[] { 255, 255, 255, 255, 255, 255, 255, 255, 113, 255, 255, 114, 115 },
-                    new byte[] { 255, 255, 255, 255, 255, 255, 255, 255, 116, 255, 117, 255, 118 },
-                    new byte[] { 255, 255, 255, 255, 255, 255, 255, 255, 119, 255, 120, 255, 121 },
-                    new byte[] { 255, 255, 255, 255, 255, 255, 255, 255, 122, 255, 123, 255, 124 },
-                    new byte[] { 255, 255, 255, 255, 255, 255, 255, 255, 125, 255, 126, 255, 127 }
-                );
-            return _decimalOptimEncodeLUT;
-        }
-    }
+    private static byte[][] decimalOptimEncodeLUT => _decimalOptimEncodeLUT ??= [
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        [255, 13, 14, 15, 16, 17, 255, 255, 255, 255, 255, 255, 18],
+        [255, 19, 20, 21, 22, 23, 255, 255, 255, 255, 255, 255, 24],
+        [255, 25, 26, 27, 28, 29, 255, 255, 255, 255, 255, 255, 30],
+        [255, 31, 32, 33, 34, 35, 36, 255, 255, 255, 255, 255, 37],
+        [255, 38, 39, 40, 41, 42, 43, 255, 255, 255, 255, 255, 44],
+        [255, 255, 45, 46, 47, 48, 49, 255, 255, 255, 255, 255, 50],
+        [255, 255, 51, 52, 53, 54, 55, 255, 255, 255, 255, 255, 56],
+        [255, 255, 255, 57, 58, 255, 255, 59, 255, 255, 255, 255, 60],
+        [255, 255, 255, 61, 62, 255, 255, 255, 63, 255, 255, 255, 64],
+        [255, 255, 255, 65, 255, 66, 255, 255, 67, 255, 255, 255, 68],
+        [255, 255, 255, 69, 255, 255, 70, 255, 71, 255, 255, 255, 72],
+        [255, 255, 255, 73, 255, 255, 74, 255, 75, 255, 255, 255, 76],
+        [255, 255, 255, 77, 255, 255, 78, 255, 79, 255, 255, 255, 80],
+        [255, 255, 255, 81, 255, 255, 82, 255, 83, 255, 255, 255, 84],
+        [255, 255, 255, 85, 255, 255, 255, 86, 255, 87, 255, 255, 88],
+        [255, 255, 255, 89, 255, 255, 255, 255, 255, 90, 255, 255, 91],
+        [255, 255, 255, 255, 92, 255, 255, 255, 255, 93, 255, 255, 94],
+        [255, 255, 255, 255, 255, 95, 255, 255, 255, 96, 255, 255, 97],
+        [255, 255, 255, 255, 255, 255, 98, 255, 255, 255, 255, 99, 100],
+        [255, 255, 255, 255, 255, 255, 101, 255, 255, 255, 255, 102, 103],
+        [255, 255, 255, 255, 255, 255, 104, 255, 255, 255, 255, 105, 106],
+        [255, 255, 255, 255, 255, 255, 255, 107, 255, 255, 255, 108, 109],
+        [255, 255, 255, 255, 255, 255, 255, 255, 110, 255, 255, 111, 112],
+        [255, 255, 255, 255, 255, 255, 255, 255, 113, 255, 255, 114, 115],
+        [255, 255, 255, 255, 255, 255, 255, 255, 116, 255, 117, 255, 118],
+        [255, 255, 255, 255, 255, 255, 255, 255, 119, 255, 120, 255, 121],
+        [255, 255, 255, 255, 255, 255, 255, 255, 122, 255, 123, 255, 124],
+        [255, 255, 255, 255, 255, 255, 255, 255, 125, 255, 126, 255, 127]];
 
     #endregion
 
@@ -453,7 +435,7 @@ static class StreamExtensions
             int read = stream.ReadByte();
             if (read < 0) throw new InvalidOperationException("Unexpected end of stream (#56384)");
             b = (byte) read;
-            res = res | ((int) (b & 127) << shifts);
+            res |= (b & 127) << shifts;
             shifts += 7;
         }
         // Sign-extend
@@ -474,7 +456,7 @@ static class StreamExtensions
             int read = stream.ReadByte();
             if (read < 0) throw new InvalidOperationException("Unexpected end of stream (#25753)");
             b = (byte) read;
-            res = res | ((uint) (b & 127) << shifts);
+            res |= ((uint) (b & 127) << shifts);
             shifts += 7;
         }
         return res;
@@ -493,7 +475,7 @@ static class StreamExtensions
             int read = stream.ReadByte();
             if (read < 0) throw new InvalidOperationException("Unexpected end of stream (#16854)");
             b = (byte) read;
-            res = res | ((long) (b & 127) << shifts);
+            res |= ((long) (b & 127) << shifts);
             shifts += 7;
         }
         // Sign-extend
@@ -514,7 +496,7 @@ static class StreamExtensions
             int read = stream.ReadByte();
             if (read < 0) throw new InvalidOperationException("Unexpected end of stream (#64783)");
             b = (byte) read;
-            res = res | ((ulong) (b & 127) << shifts);
+            res |= (ulong) (b & 127) << shifts;
             shifts += 7;
         }
         return res;
@@ -538,24 +520,15 @@ static class StreamExtensions
 
     private static short[] _decimalOptimDecodeLUT;
 
-    private static short[] decimalOptimDecodeLUT
-    {
-        get
-        {
-            if (_decimalOptimDecodeLUT == null)
-                _decimalOptimDecodeLUT = new short[] {
-                    0, 256, 512, 768, 1024, 1280, 1536, 1792, 2048, 2304, 2560, 2816, 3072, 257, 513, 769, 1025, 1281, 3073,
-                    258, 514, 770, 1026, 1282, 3074, 259, 515, 771, 1027, 1283, 3075,
-                    260, 516, 772, 1028, 1284, 1540, 3076, 261, 517, 773, 1029, 1285, 1541, 3077,
-                    518, 774, 1030, 1286, 1542, 3078, 519, 775, 1031, 1287, 1543, 3079, 776, 1032, 1800, 3080,
-                    777, 1033, 2057, 3081, 778, 1290, 2058, 3082, 779, 1547, 2059, 3083, 780, 1548, 2060, 3084,
-                    781, 1549, 2061, 3085, 782, 1550, 2062, 3086, 783, 1807, 2319, 3087, 784, 2320, 3088,
-                    1041, 2321, 3089, 1298, 2322, 3090, 1555, 2835, 3091, 1556, 2836, 3092, 1557, 2837, 3093, 1814, 2838, 3094,
-                    2071, 2839, 3095, 2072, 2840, 3096, 2073, 2585, 3097, 2074, 2586, 3098, 2075, 2587, 3099, 2076, 2588, 3100,
-                };
-            return _decimalOptimDecodeLUT;
-        }
-    }
+    private static short[] decimalOptimDecodeLUT => _decimalOptimDecodeLUT ??= [
+        0, 256, 512, 768, 1024, 1280, 1536, 1792, 2048, 2304, 2560, 2816, 3072, 257, 513, 769, 1025, 1281, 3073,
+        258, 514, 770, 1026, 1282, 3074, 259, 515, 771, 1027, 1283, 3075,
+        260, 516, 772, 1028, 1284, 1540, 3076, 261, 517, 773, 1029, 1285, 1541, 3077,
+        518, 774, 1030, 1286, 1542, 3078, 519, 775, 1031, 1287, 1543, 3079, 776, 1032, 1800, 3080,
+        777, 1033, 2057, 3081, 778, 1290, 2058, 3082, 779, 1547, 2059, 3083, 780, 1548, 2060, 3084,
+        781, 1549, 2061, 3085, 782, 1550, 2062, 3086, 783, 1807, 2319, 3087, 784, 2320, 3088,
+        1041, 2321, 3089, 1298, 2322, 3090, 1555, 2835, 3091, 1556, 2836, 3092, 1557, 2837, 3093, 1814, 2838, 3094,
+        2071, 2839, 3095, 2072, 2840, 3096, 2073, 2585, 3097, 2074, 2586, 3098, 2075, 2587, 3099, 2076, 2588, 3100];
 
     #endregion
 }

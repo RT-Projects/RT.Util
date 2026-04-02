@@ -1,10 +1,10 @@
-namespace RT.Util;
+﻿namespace RT.Util;
 
 /// <summary>
 ///     Measures frame rate statistics (or, more generally, statistics of any event occurring multiple times in real time).</summary>
 public class FpsCounter
 {
-    private Queue<double> _frameTimes = new Queue<double>(32);
+    private Queue<double> _frameTimes = new(32);
     private long _lastCount;
     private double _secondsPerCount = 1.0 / WinAPI.PerformanceFreq;
 
@@ -31,8 +31,7 @@ public class FpsCounter
     public double? CountFrame()
     {
         double? result = null;
-        long count;
-        WinAPI.QueryPerformanceCounter(out count);
+        WinAPI.QueryPerformanceCounter(out var count);
         if (_lastCount != 0)
         {
             while (_frameTimes.Count > 5 && _frameTimes.Count > AverageFps / 2)

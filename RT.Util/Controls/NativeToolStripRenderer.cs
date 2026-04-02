@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Windows.Forms.VisualStyles;
 
 // MIT License. Original code from http://code.google.com/p/szotar/.
@@ -23,6 +23,8 @@ public enum NativeToolbarTheme
 /// <summary>Renders a toolstrip using the UxTheme API via VisualStyleRenderer and a specific style.</summary>
 public class NativeToolStripRenderer : ToolStripSystemRenderer
 {
+#pragma warning disable IDE1006 // Naming Styles
+
     private VisualStyleRenderer _renderer;
 
     /// <summary>Gets/sets the type of theme to use.</summary>
@@ -41,11 +43,11 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
     ///     It shouldn't be necessary to P/Invoke like this, however VisualStyleRenderer.GetMargins misses out a parameter in
     ///     its own P/Invoke.</summary>
     [DllImport("uxtheme.dll")]
-    private extern static int GetThemeMargins(IntPtr hTheme, IntPtr hdc, int iPartId, int iStateId, int iPropId, IntPtr rect, out MARGINS pMargins);
+    private static extern int GetThemeMargins(IntPtr hTheme, IntPtr hdc, int iPartId, int iStateId, int iPropId, IntPtr rect, out MARGINS pMargins);
 
     // See http://msdn2.microsoft.com/en-us/library/bb773210.aspx - "Parts and States"
     // Only menu-related parts/states are needed here, VisualStyleRenderer handles most of the rest.
-    private enum MenuParts : int
+    private enum menuParts : int
     {
         ItemTMSchema = 1,
         DropDownTMSchema = 2,
@@ -69,13 +71,13 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
         SystemRestore = 20
     }
 
-    private enum MenuBarStates : int
+    private enum menuBarStates : int
     {
         Active = 1,
         Inactive = 2
     }
 
-    private enum MenuBarItemStates : int
+    private enum menuBarItemStates : int
     {
         Normal = 1,
         Hover = 2,
@@ -85,7 +87,7 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
         DisabledPushed = 6
     }
 
-    private enum MenuPopupItemStates : int
+    private enum menuPopupItemStates : int
     {
         Normal = 1,
         Hover = 2,
@@ -93,7 +95,7 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
         DisabledHover = 4
     }
 
-    private enum MenuPopupCheckStates : int
+    private enum menuPopupCheckStates : int
     {
         CheckmarkNormal = 1,
         CheckmarkDisabled = 2,
@@ -101,37 +103,36 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
         BulletDisabled = 4
     }
 
-    private enum MenuPopupCheckBackgroundStates : int
+    private enum menuPopupCheckBackgroundStates : int
     {
         Disabled = 1,
         Normal = 2,
         Bitmap = 3
     }
 
-    private enum MenuPopupSubMenuStates : int
+    private enum menuPopupSubMenuStates : int
     {
         Normal = 1,
         Disabled = 2
     }
 
-    private enum MarginTypes : int
+    private enum marginTypes : int
     {
         Sizing = 3601,
         Content = 3602,
         Caption = 3603
     }
 
-    private static readonly int RebarBackground = 6;
+    private const int RebarBackground = 6;
 
-    private Padding GetThemeMargins(IDeviceContext dc, MarginTypes marginType)
+    private Padding getThemeMargins(Graphics dc, marginTypes marginType)
     {
-        MARGINS margins;
         try
         {
-            IntPtr hDC = dc.GetHdc();
-            if (0 == GetThemeMargins(_renderer.Handle, hDC, _renderer.Part, _renderer.State, (int) marginType, IntPtr.Zero, out margins))
-                return new Padding(margins.cxLeftWidth, margins.cyTopHeight, margins.cxRightWidth, margins.cyBottomHeight);
-            return new Padding(0);
+            var hDC = dc.GetHdc();
+            return 0 == GetThemeMargins(_renderer.Handle, hDC, _renderer.Part, _renderer.State, (int) marginType, IntPtr.Zero, out var margins)
+                ? new Padding(margins.cxLeftWidth, margins.cyTopHeight, margins.cxRightWidth, margins.cyBottomHeight)
+                : new Padding(0);
         }
         finally
         {
@@ -139,78 +140,45 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
         }
     }
 
-    private static int GetItemState(ToolStripItem item)
+    private static int getItemState(ToolStripItem item)
     {
-        bool hot = item.Selected;
+        var hot = item.Selected;
 
         if (item.IsOnDropDown)
         {
-            if (item.Enabled)
-                return hot ? (int) MenuPopupItemStates.Hover : (int) MenuPopupItemStates.Normal;
-            return hot ? (int) MenuPopupItemStates.DisabledHover : (int) MenuPopupItemStates.Disabled;
+            return item.Enabled
+                ? hot ? (int) menuPopupItemStates.Hover : (int) menuPopupItemStates.Normal
+                : hot ? (int) menuPopupItemStates.DisabledHover : (int) menuPopupItemStates.Disabled;
         }
         else
         {
-            if (item.Pressed)
-                return item.Enabled ? (int) MenuBarItemStates.Pushed : (int) MenuBarItemStates.DisabledPushed;
-            if (item.Enabled)
-                return hot ? (int) MenuBarItemStates.Hover : (int) MenuBarItemStates.Normal;
-            return hot ? (int) MenuBarItemStates.DisabledHover : (int) MenuBarItemStates.Disabled;
+            return item.Pressed
+                ? item.Enabled ? (int) menuBarItemStates.Pushed : (int) menuBarItemStates.DisabledPushed
+                : item.Enabled
+                ? hot ? (int) menuBarItemStates.Hover : (int) menuBarItemStates.Normal
+                : hot ? (int) menuBarItemStates.DisabledHover : (int) menuBarItemStates.Disabled;
         }
     }
 
-    private string RebarClass
-    {
-        get
-        {
-            return SubclassPrefix + "Rebar";
-        }
-    }
+    private string rebarClass => subclassPrefix + "Rebar";
 
-    private string ToolbarClass
-    {
-        get
-        {
-            return SubclassPrefix + "ToolBar";
-        }
-    }
+    private string menuClass => subclassPrefix + "Menu";
 
-    private string MenuClass
+    private string subclassPrefix => Theme switch
     {
-        get
-        {
-            return SubclassPrefix + "Menu";
-        }
-    }
+        NativeToolbarTheme.MediaToolbar => "Media::",
+        NativeToolbarTheme.CommunicationsToolbar => "Communications::",
+        NativeToolbarTheme.BrowserTabBar => "BrowserTabBar::",
+        NativeToolbarTheme.HelpBar => "Help::",
+        _ => string.Empty,
+    };
 
-    private string SubclassPrefix
-    {
-        get
-        {
-            switch (Theme)
-            {
-                case NativeToolbarTheme.MediaToolbar: return "Media::";
-                case NativeToolbarTheme.CommunicationsToolbar: return "Communications::";
-                case NativeToolbarTheme.BrowserTabBar: return "BrowserTabBar::";
-                case NativeToolbarTheme.HelpBar: return "Help::";
-                default: return string.Empty;
-            }
-        }
-    }
-
-    private VisualStyleElement Subclass(VisualStyleElement element)
-    {
-        return VisualStyleElement.CreateElement(SubclassPrefix + element.ClassName,
-                element.Part, element.State);
-    }
-
-    private bool EnsureRenderer()
+    private bool ensureRenderer()
     {
         if (!IsSupported)
             return false;
 
-        if (_renderer == null)
-            _renderer = new VisualStyleRenderer(VisualStyleElement.Button.PushButton.Normal);
+        _renderer ??= new VisualStyleRenderer(VisualStyleElement.Button.PushButton.Normal);
 
         return true;
     }
@@ -232,8 +200,8 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
     protected override void InitializePanel(ToolStripPanel toolStripPanel)
     {
         foreach (Control control in toolStripPanel.Controls)
-            if (control is ToolStrip)
-                Initialize((ToolStrip) control);
+            if (control is ToolStrip strip)
+                Initialize(strip);
 
         base.InitializePanel(toolStripPanel);
     }
@@ -241,16 +209,16 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
     /// <summary>Override - see base.</summary>
     protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e)
     {
-        if (EnsureRenderer())
+        if (ensureRenderer())
         {
-            _renderer.SetParameters(MenuClass, (int) MenuParts.PopupBorders, 0);
+            _renderer.SetParameters(menuClass, (int) menuParts.PopupBorders, 0);
             if (e.ToolStrip.IsDropDown)
             {
-                Region oldClip = e.Graphics.Clip;
+                var oldClip = e.Graphics.Clip;
 
                 // Tool strip borders are rendered *after* the content, for some reason.
                 // So we have to exclude the inside of the popup otherwise we'll draw over it.
-                Rectangle insideRect = e.ToolStrip.ClientRectangle;
+                var insideRect = e.ToolStrip.ClientRectangle;
                 insideRect.Inflate(-1, -1);
                 e.Graphics.ExcludeClip(insideRect);
 
@@ -266,14 +234,14 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
         }
     }
 
-    Rectangle GetBackgroundRectangle(ToolStripItem item)
+    private static Rectangle getBackgroundRectangle(ToolStripItem item)
     {
         if (!item.IsOnDropDown)
             return new Rectangle(new Point(), item.Bounds.Size);
 
         // For a drop-down menu item, the background rectangles of the items should be touching vertically.
         // This ensures that's the case.
-        Rectangle rect = item.Bounds;
+        var rect = item.Bounds;
 
         // The background rectangle should be inset two pixels horizontally (on both sides), but we have 
         // to take into account the border.
@@ -288,12 +256,12 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
     /// <summary>Override - see base.</summary>
     protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
     {
-        if (EnsureRenderer())
+        if (ensureRenderer())
         {
-            int partID = e.Item.IsOnDropDown ? (int) MenuParts.PopupItem : (int) MenuParts.BarItem;
-            _renderer.SetParameters(MenuClass, partID, GetItemState(e.Item));
+            var partID = e.Item.IsOnDropDown ? (int) menuParts.PopupItem : (int) menuParts.BarItem;
+            _renderer.SetParameters(menuClass, partID, getItemState(e.Item));
 
-            Rectangle bgRect = GetBackgroundRectangle(e.Item);
+            var bgRect = getBackgroundRectangle(e.Item);
             _renderer.DrawBackground(e.Graphics, bgRect, bgRect);
         }
         else
@@ -305,17 +273,17 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
     /// <summary>Override - see base.</summary>
     protected override void OnRenderToolStripPanelBackground(ToolStripPanelRenderEventArgs e)
     {
-        if (EnsureRenderer())
+        if (ensureRenderer())
         {
             // Draw the background using Rebar & RP_BACKGROUND (or, if that is not available, fall back to
             // Rebar.Band.Normal)
-            if (VisualStyleRenderer.IsElementDefined(VisualStyleElement.CreateElement(RebarClass, RebarBackground, 0)))
+            if (VisualStyleRenderer.IsElementDefined(VisualStyleElement.CreateElement(rebarClass, RebarBackground, 0)))
             {
-                _renderer.SetParameters(RebarClass, RebarBackground, 0);
+                _renderer.SetParameters(rebarClass, RebarBackground, 0);
             }
             else
             {
-                _renderer.SetParameters(RebarClass, 0, 0);
+                _renderer.SetParameters(rebarClass, 0, 0);
             }
 
             if (_renderer.IsBackgroundPartiallyTransparent())
@@ -334,11 +302,11 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
     /// <summary>Render the background of an actual menu bar, dropdown menu or toolbar.</summary>
     protected override void OnRenderToolStripBackground(System.Windows.Forms.ToolStripRenderEventArgs e)
     {
-        if (EnsureRenderer())
+        if (ensureRenderer())
         {
             if (e.ToolStrip.IsDropDown)
             {
-                _renderer.SetParameters(MenuClass, (int) MenuParts.PopupBackground, 0);
+                _renderer.SetParameters(menuClass, (int) menuParts.PopupBackground, 0);
             }
             else
             {
@@ -357,10 +325,10 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
                     // A lone toolbar/menubar should act like it's inside a toolbox, I guess.
                     // Maybe I should use the MenuClass in the case of a MenuStrip, although that would break
                     // the other themes...
-                    if (VisualStyleRenderer.IsElementDefined(VisualStyleElement.CreateElement(RebarClass, RebarBackground, 0)))
-                        _renderer.SetParameters(RebarClass, RebarBackground, 0);
+                    if (VisualStyleRenderer.IsElementDefined(VisualStyleElement.CreateElement(rebarClass, RebarBackground, 0)))
+                        _renderer.SetParameters(rebarClass, RebarBackground, 0);
                     else
-                        _renderer.SetParameters(RebarClass, 0, 0);
+                        _renderer.SetParameters(rebarClass, 0, 0);
                 }
             }
 
@@ -380,7 +348,7 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
     ///     we also pass down arrow drawing to the system renderer.</summary>
     protected override void OnRenderSplitButtonBackground(ToolStripItemRenderEventArgs e)
     {
-        if (EnsureRenderer())
+        if (ensureRenderer())
         {
             ToolStripSplitButton sb = (ToolStripSplitButton) e.Item;
             base.OnRenderSplitButtonBackground(e);
@@ -394,18 +362,18 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
         }
     }
 
-    Color GetItemTextColor(ToolStripItem item)
+    private Color getItemTextColor(ToolStripItem item)
     {
-        int partId = item.IsOnDropDown ? (int) MenuParts.PopupItem : (int) MenuParts.BarItem;
-        _renderer.SetParameters(MenuClass, partId, GetItemState(item));
+        var partId = item.IsOnDropDown ? (int) menuParts.PopupItem : (int) menuParts.BarItem;
+        _renderer.SetParameters(menuClass, partId, getItemState(item));
         return _renderer.GetColor(ColorProperty.TextColor);
     }
 
     /// <summary>Override - see base.</summary>
     protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
     {
-        if (EnsureRenderer())
-            e.TextColor = GetItemTextColor(e.Item);
+        if (ensureRenderer())
+            e.TextColor = getItemTextColor(e.Item);
 
         base.OnRenderItemText(e);
     }
@@ -413,22 +381,22 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
     /// <summary>Override - see base.</summary>
     protected override void OnRenderImageMargin(ToolStripRenderEventArgs e)
     {
-        if (EnsureRenderer())
+        if (ensureRenderer())
         {
             if (e.ToolStrip.IsDropDown)
             {
-                _renderer.SetParameters(MenuClass, (int) MenuParts.PopupGutter, 0);
+                _renderer.SetParameters(menuClass, (int) menuParts.PopupGutter, 0);
                 // The AffectedBounds is usually too small, way too small to look right. Instead of using that,
                 // use the AffectedBounds but with the right width. Then narrow the rectangle to the correct edge
                 // based on whether or not it's RTL. (It doesn't need to be narrowed to an edge in LTR mode, but let's
                 // do that anyway.)
                 // Using the DisplayRectangle gets roughly the right size so that the separator is closer to the text.
-                Padding margins = GetThemeMargins(e.Graphics, MarginTypes.Sizing);
-                int extraWidth = (e.ToolStrip.Width - e.ToolStrip.DisplayRectangle.Width - margins.Left - margins.Right - 1) - e.AffectedBounds.Width;
-                Rectangle rect = e.AffectedBounds;
+                var margins = getThemeMargins(e.Graphics, marginTypes.Sizing);
+                var extraWidth = (e.ToolStrip.Width - e.ToolStrip.DisplayRectangle.Width - margins.Left - margins.Right - 1) - e.AffectedBounds.Width;
+                var rect = e.AffectedBounds;
                 rect.Y += 2;
                 rect.Height -= 4;
-                int sepWidth = _renderer.GetPartSize(e.Graphics, ThemeSizeType.True).Width;
+                var sepWidth = _renderer.GetPartSize(e.Graphics, ThemeSizeType.True).Width;
                 if (e.ToolStrip.RightToLeft == RightToLeft.Yes)
                 {
                     rect = new Rectangle(rect.X - extraWidth, rect.Y, sepWidth, rect.Height);
@@ -450,9 +418,9 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
     /// <summary>Override - see base.</summary>
     protected override void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e)
     {
-        if (e.ToolStrip.IsDropDown && EnsureRenderer())
+        if (e.ToolStrip.IsDropDown && ensureRenderer())
         {
-            _renderer.SetParameters(MenuClass, (int) MenuParts.PopupSeparator, 0);
+            _renderer.SetParameters(menuClass, (int) menuParts.PopupSeparator, 0);
             Rectangle rect = new Rectangle(e.ToolStrip.DisplayRectangle.Left, 0, e.ToolStrip.DisplayRectangle.Width, e.Item.Height);
             _renderer.DrawBackground(e.Graphics, rect, rect);
         }
@@ -465,24 +433,24 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
     /// <summary>Override - see base.</summary>
     protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e)
     {
-        if (EnsureRenderer())
+        if (ensureRenderer())
         {
-            Rectangle bgRect = GetBackgroundRectangle(e.Item);
+            var bgRect = getBackgroundRectangle(e.Item);
             bgRect.Width = bgRect.Height;
 
             // Now, mirror its position if the menu item is RTL.
             if (e.Item.RightToLeft == RightToLeft.Yes)
                 bgRect = new Rectangle(e.ToolStrip.ClientSize.Width - bgRect.X - bgRect.Width, bgRect.Y, bgRect.Width, bgRect.Height);
 
-            _renderer.SetParameters(MenuClass, (int) MenuParts.PopupCheckBackground, e.Item.Enabled ? (int) MenuPopupCheckBackgroundStates.Normal : (int) MenuPopupCheckBackgroundStates.Disabled);
+            _renderer.SetParameters(menuClass, (int) menuParts.PopupCheckBackground, e.Item.Enabled ? (int) menuPopupCheckBackgroundStates.Normal : (int) menuPopupCheckBackgroundStates.Disabled);
             _renderer.DrawBackground(e.Graphics, bgRect);
 
-            Rectangle checkRect = e.ImageRectangle;
+            var checkRect = e.ImageRectangle;
             checkRect.X = bgRect.X + bgRect.Width / 2 - checkRect.Width / 2;
             checkRect.Y = bgRect.Y + bgRect.Height / 2 - checkRect.Height / 2;
 
             // I don't think ToolStrip even supports radio box items, so no need to render them.
-            _renderer.SetParameters(MenuClass, (int) MenuParts.PopupCheck, e.Item.Enabled ? (int) MenuPopupCheckStates.CheckmarkNormal : (int) MenuPopupCheckStates.CheckmarkDisabled);
+            _renderer.SetParameters(menuClass, (int) menuParts.PopupCheck, e.Item.Enabled ? (int) menuPopupCheckStates.CheckmarkNormal : (int) menuPopupCheckStates.CheckmarkDisabled);
 
             _renderer.DrawBackground(e.Graphics, checkRect);
         }
@@ -497,22 +465,22 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
     {
         // The default renderer will draw an arrow for us (the UXTheme API seems not to have one for all directions),
         // but it will get the colour wrong in many cases. The text colour is probably the best colour to use.
-        if (EnsureRenderer())
-            e.ArrowColor = GetItemTextColor(e.Item);
+        if (ensureRenderer())
+            e.ArrowColor = getItemTextColor(e.Item);
         base.OnRenderArrow(e);
     }
 
     /// <summary>Override - see base.</summary>
     protected override void OnRenderOverflowButtonBackground(ToolStripItemRenderEventArgs e)
     {
-        if (EnsureRenderer())
+        if (ensureRenderer())
         {
             // BrowserTabBar::Rebar draws the chevron using the default background. Odd.
-            string rebarClass = RebarClass;
+            var rebarClass = this.rebarClass;
             if (Theme == NativeToolbarTheme.BrowserTabBar)
                 rebarClass = "Rebar";
 
-            int state = VisualStyleElement.Rebar.Chevron.Normal.State;
+            var state = VisualStyleElement.Rebar.Chevron.Normal.State;
             if (e.Item.Pressed)
                 state = VisualStyleElement.Rebar.Chevron.Pressed.State;
             else if (e.Item.Selected)
@@ -528,7 +496,7 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
     }
 
     /// <summary>Gets a value indicating whether a native theme can be used.</summary>
-    public bool IsSupported
+    public static bool IsSupported
     {
         get
         {
@@ -539,8 +507,9 @@ public class NativeToolStripRenderer : ToolStripSystemRenderer
             return
                     VisualStyleRenderer.IsElementDefined(
                             VisualStyleElement.CreateElement("Menu",
-                                    (int) MenuParts.BarBackground,
-                                    (int) MenuBarStates.Active));
+                                    (int) menuParts.BarBackground,
+                                    (int) menuBarStates.Active));
         }
     }
+#pragma warning restore IDE1006 // Naming Styles
 }

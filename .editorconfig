@@ -67,7 +67,7 @@ dotnet_style_prefer_inferred_tuple_names = true
 dotnet_style_prefer_is_null_check_over_reference_equality_method = true
 dotnet_style_prefer_simplified_boolean_expressions = true
 dotnet_style_prefer_simplified_interpolation = true
-dotnet_style_prefer_collection_expression = false
+dotnet_style_prefer_collection_expression = true
 
 # Field preferences
 dotnet_style_readonly_field = false
@@ -204,25 +204,21 @@ dotnet_naming_rule.private_types_should_be_camel_case.severity = suggestion
 dotnet_naming_rule.private_types_should_be_camel_case.symbols = private_types
 dotnet_naming_rule.private_types_should_be_camel_case.style = camel_case
 
-dotnet_naming_rule.public_members_should_be_pascal_case.severity = suggestion
-dotnet_naming_rule.public_members_should_be_pascal_case.symbols = public_members
-dotnet_naming_rule.public_members_should_be_pascal_case.style = pascal_case
+dotnet_naming_rule.public_non_field_members_should_be_pascal_case.severity = suggestion
+dotnet_naming_rule.public_non_field_members_should_be_pascal_case.symbols = public_non_field_members
+dotnet_naming_rule.public_non_field_members_should_be_pascal_case.style = pascal_case
 
-dotnet_naming_rule.private_members_should_be_camel_case.severity = suggestion
-dotnet_naming_rule.private_members_should_be_camel_case.symbols = private_members
-dotnet_naming_rule.private_members_should_be_camel_case.style = camel_case
+dotnet_naming_rule.private_non_field_members_should_be_camel_case.severity = suggestion
+dotnet_naming_rule.private_non_field_members_should_be_camel_case.symbols = private_non_field_members
+dotnet_naming_rule.private_non_field_members_should_be_camel_case.style = camel_case
 
 dotnet_naming_rule.private_or_internal_field_should_be_begins_with__.severity = suggestion
 dotnet_naming_rule.private_or_internal_field_should_be_begins_with__.symbols = private_or_internal_field
 dotnet_naming_rule.private_or_internal_field_should_be_begins_with__.style = begins_with__
 
-dotnet_naming_rule.private_constant_fields_should_be_begins_with__.severity = suggestion
-dotnet_naming_rule.private_constant_fields_should_be_begins_with__.symbols = private_constant_fields
-dotnet_naming_rule.private_constant_fields_should_be_begins_with__.style = begins_with__
-
-dotnet_naming_rule.public_constant_fields_should_be_pascal_case.severity = suggestion
-dotnet_naming_rule.public_constant_fields_should_be_pascal_case.symbols = public_constant_fields
-dotnet_naming_rule.public_constant_fields_should_be_pascal_case.style = pascal_case
+dotnet_naming_rule.constant_fields_should_be_pascal_case.severity = suggestion
+dotnet_naming_rule.constant_fields_should_be_pascal_case.symbols = constant_fields
+dotnet_naming_rule.constant_fields_should_be_pascal_case.style = pascal_case
 
 # Symbol specifications
 
@@ -230,33 +226,29 @@ dotnet_naming_symbols.interface.applicable_kinds = interface
 dotnet_naming_symbols.interface.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
 dotnet_naming_symbols.interface.required_modifiers =
 
-dotnet_naming_symbols.private_types.applicable_kinds = class, struct, interface, enum
-dotnet_naming_symbols.private_types.applicable_accessibilities = private, protected, protected_internal, private_protected
-dotnet_naming_symbols.private_types.required_modifiers =
-
 dotnet_naming_symbols.public_types.applicable_kinds = class, struct, interface, enum
-dotnet_naming_symbols.public_types.applicable_accessibilities = public, internal
+dotnet_naming_symbols.public_types.applicable_accessibilities = public, internal, protected, protected_internal
 dotnet_naming_symbols.public_types.required_modifiers =
 
-dotnet_naming_symbols.public_members.applicable_kinds = property, event, method, field
-dotnet_naming_symbols.public_members.applicable_accessibilities = internal, public
-dotnet_naming_symbols.public_members.required_modifiers =
+dotnet_naming_symbols.private_types.applicable_kinds = class, struct, interface, enum
+dotnet_naming_symbols.private_types.applicable_accessibilities = private, private_protected
+dotnet_naming_symbols.private_types.required_modifiers =
 
-dotnet_naming_symbols.private_members.applicable_kinds = property, event, method
-dotnet_naming_symbols.private_members.applicable_accessibilities = private, protected, protected_internal, private_protected
-dotnet_naming_symbols.private_members.required_modifiers =
+dotnet_naming_symbols.public_non_field_members.applicable_kinds = property, event, method
+dotnet_naming_symbols.public_non_field_members.applicable_accessibilities = public, internal, protected, protected_internal
+dotnet_naming_symbols.public_non_field_members.required_modifiers =
+
+dotnet_naming_symbols.private_non_field_members.applicable_kinds = property, event, method
+dotnet_naming_symbols.private_non_field_members.applicable_accessibilities = private, private_protected
+dotnet_naming_symbols.private_non_field_members.required_modifiers =
 
 dotnet_naming_symbols.private_or_internal_field.applicable_kinds = field
 dotnet_naming_symbols.private_or_internal_field.applicable_accessibilities = internal, private
 dotnet_naming_symbols.private_or_internal_field.required_modifiers =
 
-dotnet_naming_symbols.private_constant_fields.applicable_kinds = field
-dotnet_naming_symbols.private_constant_fields.applicable_accessibilities = private, protected, internal, protected_internal, private_protected
-dotnet_naming_symbols.private_constant_fields.required_modifiers = const
-
-dotnet_naming_symbols.public_constant_fields.applicable_kinds = field
-dotnet_naming_symbols.public_constant_fields.applicable_accessibilities = public
-dotnet_naming_symbols.public_constant_fields.required_modifiers = const
+dotnet_naming_symbols.constant_fields.applicable_kinds = field
+dotnet_naming_symbols.constant_fields.applicable_accessibilities = *
+dotnet_naming_symbols.constant_fields.required_modifiers = const
 
 # Naming styles
 
@@ -347,3 +339,25 @@ dotnet_diagnostic.CA1866.severity = none
 
 # SYSLIB1045: Use 'GeneratedRegexAttribute' to generate the regular expression implementation at compile-time (not available in netstandard 2.0)
 dotnet_diagnostic.SYSLIB1045.severity = none
+
+# IDE0305: Simplify collection initialization (.ToList()/.ToArray())
+dotnet_diagnostic.IDE0305.severity = none
+
+# CA1401, CA2101, SYSLIB1054: Leave DllImport and P/Invoke alone
+dotnet_diagnostic.CA1401.severity = none
+dotnet_diagnostic.CA2101.severity = none
+dotnet_diagnostic.SYSLIB1054.severity = none
+
+# CA1835: Leave Stream.ReadAsync() alone
+dotnet_diagnostic.CA1835.severity = none
+
+# IDE0079: For some reason it labels suppressions as “unnecessary” so I have to ironically suppress the warning about suppressions
+dotnet_diagnostic.IDE0079.severity = none
+
+# CA1845, CA2249: Erroneous suggestions to change .IndexOf() to .Contains() where it’s not possible
+dotnet_diagnostic.CA1845.severity = none
+dotnet_diagnostic.CA2249.severity = none
+
+# CA1069: Enums are allowed to have repeating numerical values
+dotnet_diagnostic.CA1069.severity = none
+

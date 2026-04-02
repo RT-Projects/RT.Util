@@ -92,7 +92,7 @@ public static class EggsML
 
             if (runLength % 2 == 0)
             {
-                curText += input.Substring(0, pos) + new string(input[pos], runLength / 2);
+                curText += $"{input.Substring(0, pos)}{new string(input[pos], runLength / 2)}";
                 input = input.Substring(idx);
                 index += idx;
                 continue;
@@ -135,7 +135,7 @@ public static class EggsML
 
                 default:
                     // Are we opening a new tag?
-                    if ((runLength == 3 || alwaysOpens(input[0]) || input[0] != opposite(curTag.Tag)) && !alwaysCloses(input[0]))
+                    if ((runLength == 3 || AlwaysOpens(input[0]) || input[0] != Opposite(curTag.Tag)) && !alwaysCloses(input[0]))
                     {
                         if (!string.IsNullOrEmpty(curText))
                             curTag.Add(new EggsText(curText, curTextIndex));
@@ -148,7 +148,7 @@ public static class EggsML
                         continue;
                     }
                     // Are we closing a tag?
-                    else if (input[0] == opposite(curTag.Tag))
+                    else if (input[0] == Opposite(curTag.Tag))
                     {
                         if (!string.IsNullOrEmpty(curText))
                             curTag.Add(new EggsText(curText, curTextIndex));
@@ -166,14 +166,14 @@ public static class EggsML
                         if (curTag.Tag == null)
                             throw new EggsMLParseException(@"Tag ‘{0}’ unexpected.".Fmt(input[0]), index, 1);
                         else
-                            throw new EggsMLParseException(@"Tag ‘{0}’ unexpected; expected closing ‘{1}’".Fmt(input[0], opposite(curTag.Tag)), index, 1, curTag.Index);
+                            throw new EggsMLParseException(@"Tag ‘{0}’ unexpected; expected closing ‘{1}’".Fmt(input[0], Opposite(curTag.Tag)), index, 1, curTag.Index);
                     }
-                    throw new EggsMLParseException(@"Character ‘{0}’ unexpected; expected closing ‘{1}’".Fmt(input[0], opposite(curTag.Tag)), index, 1, curTag.Index);
+                    throw new EggsMLParseException(@"Character ‘{0}’ unexpected; expected closing ‘{1}’".Fmt(input[0], Opposite(curTag.Tag)), index, 1, curTag.Index);
             }
         }
 
         if (stack.Count > 0)
-            throw new EggsMLParseException(@"Closing ‘{0}’ missing".Fmt(opposite(curTag.Tag)), index, 0, curTag.Index);
+            throw new EggsMLParseException(@"Closing ‘{0}’ missing".Fmt(Opposite(curTag.Tag)), index, 0, curTag.Index);
 
         if (!string.IsNullOrEmpty(curText))
             curTag.Add(new EggsText(curText, curTextIndex));
@@ -191,9 +191,9 @@ public static class EggsML
                 ? new string('"', input.Length * 2)
                 : @"""" + input.Replace(@"""", @"""""") + @"""";
 
-    internal static char? opposite(char? p) => p == '[' ? ']' : p == '<' ? '>' : p == '{' ? '}' : p;
-    internal static bool alwaysOpens(char? p) { return p == '[' || p == '<' || p == '{'; }
-    private static bool alwaysCloses(char? p) { return p == ']' || p == '>' || p == '}'; }
+    internal static char? Opposite(char? p) => p == '[' ? ']' : p == '<' ? '>' : p == '{' ? '}' : p;
+    internal static bool AlwaysOpens(char? p) => p is '[' or '<' or '{';
+    private static bool alwaysCloses(char? p) => p is ']' or '>' or '}';
 
     /// <summary>
     ///     Provides a delegate for <see cref="WordWrap&lt;TState&gt;"/> which renders a piece of text.</summary>
@@ -253,7 +253,7 @@ public static class EggsML
     ///     amount by which opening this tag has advanced the text position.</returns>
     public delegate (TState newState, int advance) EggNextState<TState>(TState oldState, char eggTag, string parameter);
 
-    private sealed class EggWalkData<TState>
+    private sealed class eggWalkData<TState>
     {
         public bool AtStartOfLine;
         public List<string> WordPieces;
@@ -277,7 +277,7 @@ public static class EggsML
             eggWalkWordWrapRecursive(node, initialState, false);
 
             if (WordPieces.Count > 0)
-                renderPieces(initialState);
+                renderPieces();
         }
 
         private void eggWalkWordWrapRecursive(EggsNode node, TState state, bool curNowrap)
@@ -342,7 +342,7 @@ public static class EggsML
                             if (WordPieces.Count > 0)
                             {
                                 // Render the part of the word that fits on the line and then move to the next line.
-                                renderPieces(state);
+                                renderPieces();
                                 advanceToNextLine(state, false);
                             }
                         }
@@ -370,7 +370,7 @@ public static class EggsML
                     // We encounter a whitespace character. All the word pieces fit on the current line, so render them.
                     if (WordPieces.Count > 0)
                     {
-                        renderPieces(state);
+                        renderPieces();
                         AtStartOfLine = false;
                     }
 
@@ -403,26 +403,15 @@ public static class EggsML
                 throw new InvalidOperationException("An EggsNode is expected to be either EggsTag or EggsText, not {0}.".Fmt(node.GetType().FullName));
         }
 
-        private static bool isWrappableAfter(string txt, int index)
+        private static bool isWrappableAfter(string txt, int index) => txt[index] switch
         {
-            // Return false for all the whitespace characters that should NOT be wrappable
-            switch (txt[index])
-            {
-                case '\u00a0':   // NO-BREAK SPACE
-                case '\u202f':    // NARROW NO-BREAK SPACE
-                    return false;
-            }
-
-            // Return true for all the NON-whitespace characters that SHOULD be wrappable
-            switch (txt[index])
-            {
-                case '\u200b':   // ZERO WIDTH SPACE
-                    return true;
-            }
-
+            // NO-BREAK SPACE — a whitespace characters that should NOT be wrappable
+            '\u00a0' or '\u202f' => false,
+            // ZERO WIDTH SPACE — a NON-whitespace characters that SHOULD be wrappable
+            '\u200b' => true,
             // Apart from the above exceptions, wrap at whitespace characters.
-            return char.IsWhiteSpace(txt, index);
-        }
+            _ => char.IsWhiteSpace(txt, index),
+        };
 
         private void advanceToNextLine(TState state, bool newParagraph)
         {
@@ -441,7 +430,7 @@ public static class EggsML
             return w;
         }
 
-        private void renderPieces(TState state)
+        private void renderPieces()
         {
             // Add a space if we are not at the beginning of the line.
             if (!AtStartOfLine)
@@ -496,12 +485,12 @@ public static class EggsML
             throw new ArgumentNullException(nameof(node));
         if (wrapWidth <= 0)
             throw new ArgumentException("Wrap width must be greater than zero.", nameof(wrapWidth));
-        var data = new EggWalkData<TState>
+        var data = new eggWalkData<TState>
         {
             AtStartOfLine = true,
-            WordPieces = new List<string>(),
-            WordPiecesState = new List<TState>(),
-            WordPiecesWidths = new List<int>(),
+            WordPieces = [],
+            WordPiecesState = [],
+            WordPiecesWidths = [],
             WordPiecesWidthsSum = 0,
             Measure = measure,
             Render = render,
@@ -516,27 +505,23 @@ public static class EggsML
     }
 }
 
-/// <summary>Contains a node in the <see cref="EggsML"/> parse tree.</summary>
-public abstract class EggsNode
+/// <summary>
+///     Contains a node in the <see cref="EggsML"/> parse tree.</summary>
+/// <param name="index">
+///     The index within the original string where this node starts.</param>
+public abstract class EggsNode(int index)
 {
     /// <summary>Returns the EggsML parse tree as XML.</summary>
     public abstract object ToXml();
 
     /// <summary>The index in the original string where this node starts.</summary>
-    public int Index { get; protected set; }
-
+    public int Index { get; protected set; } = index;
     /// <summary>Determines whether this node contains any textual content.</summary>
     public abstract bool HasText { get; }
 
     /// <summary>
     ///     Gets a reference to the parent node of this node. The root node is the only one for which this property is null.</summary>
     public EggsTag Parent { get; internal set; }
-
-    /// <summary>
-    ///     Constructor.</summary>
-    /// <param name="index">
-    ///     The index within the original string where this node starts.</param>
-    public EggsNode(int index) { Index = index; }
 
     /// <summary>
     ///     Turns a list of child nodes into EggsML mark-up.</summary>
@@ -547,7 +532,7 @@ public abstract class EggsNode
     ///     performed.</param>
     /// <returns>
     ///     EggsML mark-up representing the same tree structure as this node.</returns>
-    protected static string stringify(List<EggsNode> children, char? tag)
+    protected static string Stringify(List<EggsNode> children, char? tag)
     {
         if (children == null || children.Count == 0)
             return "";
@@ -563,7 +548,7 @@ public abstract class EggsNode
             // If the item is a tag, and it is the same tag character as the current one, we need to escape it by tripling it
             if (sb.Length > 0 && childStr.Length > 0 && childStr[0] == sb[sb.Length - 1])
                 sb.Append('`');
-            if (tag != null && children[i] is EggsTag && ((EggsTag) children[i]).Tag == tag && !EggsML.alwaysOpens(tag))
+            if (tag != null && children[i] is EggsTag childTag && childTag.Tag == tag && !EggsML.AlwaysOpens(tag))
                 sb.Append(new string(tag.Value, 2));
             sb.Append(childStr);
         }
@@ -576,14 +561,14 @@ public abstract class EggsNode
         if (excludeSyntax)
         {
             var builder = new StringBuilder();
-            textify(builder);
+            Textify(builder);
             return builder.ToString();
         }
         else
             return ToString();
     }
 
-    internal abstract void textify(StringBuilder builder);
+    internal abstract void Textify(StringBuilder builder);
 
     /// <summary>
     ///     Generates a sequence of <see cref="ConsoleColoredString"/>s from an EggsML parse tree by word-wrapping the output
@@ -685,7 +670,7 @@ public sealed class EggsTag : EggsNode
     ///     The character used to open the tag (e.g. '[').</param>
     /// <param name="index">
     ///     The index in the original string where this tag was opened.</param>
-    public EggsTag(char? tag, int index) : base(index) { Tag = tag; _children = new List<EggsNode>(); }
+    public EggsTag(char? tag, int index) : base(index) { Tag = tag; _children = []; }
 
     /// <summary>
     ///     Constructs a new top-level EggsML parse-tree node containing the specified sub-nodes.</summary>
@@ -709,74 +694,61 @@ public sealed class EggsTag : EggsNode
     public override string ToString()
     {
         if (_children.Count == 0)
-            return Tag == null ? "" : EggsML.alwaysOpens(Tag) ? Tag.ToString() + EggsML.opposite(Tag) : Tag + "`" + Tag;
+            return Tag == null ? "" : EggsML.AlwaysOpens(Tag) ? Tag.ToString() + EggsML.Opposite(Tag) : Tag + "`" + Tag;
 
-        var childrenStr = stringify(_children, Tag);
+        var childrenStr = Stringify(_children, Tag);
         return Tag == null
             ? childrenStr
             : childrenStr.StartsWith(Tag)
-                ? childrenStr.EndsWith(EggsML.opposite(Tag))
-                    ? Tag + "`" + childrenStr + "`" + EggsML.opposite(Tag)
-                    : Tag + "`" + childrenStr + EggsML.opposite(Tag)
-                : childrenStr.EndsWith(EggsML.opposite(Tag))
-                    ? Tag + childrenStr + "`" + EggsML.opposite(Tag)
-                    : Tag + childrenStr + EggsML.opposite(Tag);
+                ? childrenStr.EndsWith(EggsML.Opposite(Tag))
+                    ? Tag + "`" + childrenStr + "`" + EggsML.Opposite(Tag)
+                    : Tag + "`" + childrenStr + EggsML.Opposite(Tag)
+                : childrenStr.EndsWith(EggsML.Opposite(Tag))
+                    ? Tag + childrenStr + "`" + EggsML.Opposite(Tag)
+                    : Tag + childrenStr + EggsML.Opposite(Tag);
     }
 
     /// <summary>Returns an XML representation of this EggsML node.</summary>
-    public override object ToXml()
+    public override object ToXml() => new XElement(Tag switch
     {
-        string tagName;
-        switch (Tag)
-        {
-            case null: tagName = "root"; break;
-            case '~': tagName = "tilde"; break;
-            case '@': tagName = "at"; break;
-            case '#': tagName = "hash"; break;
-            case '$': tagName = "dollar"; break;
-            case '%': tagName = "percent"; break;
-            case '^': tagName = "hat"; break;
-            case '&': tagName = "and"; break;
-            case '*': tagName = "star"; break;
-            case '_': tagName = "underscore"; break;
-            case '=': tagName = "equals"; break;
-            case '+': tagName = "plus"; break;
-            case '/': tagName = "slash"; break;
-            case '\\': tagName = "backslash"; break;
-            case '[': tagName = "square"; break;
-            case '{': tagName = "curly"; break;
-            case '<': tagName = "angle"; break;
-            case '|': tagName = "pipe"; break;
-            default:
-                throw new InvalidOperationException("Unexpected tag character ‘{0}’.".Fmt(Tag));
-        }
-        return new XElement(tagName, _children.Select(child => child.ToXml()));
-    }
+        null => "root",
+        '~' => "tilde",
+        '@' => "at",
+        '#' => "hash",
+        '$' => "dollar",
+        '%' => "percent",
+        '^' => "hat",
+        '&' => "and",
+        '*' => "star",
+        '_' => "underscore",
+        '=' => "equals",
+        '+' => "plus",
+        '/' => "slash",
+        '\\' => "backslash",
+        '[' => "square",
+        '{' => "curly",
+        '<' => "angle",
+        '|' => "pipe",
+        _ => throw new InvalidOperationException("Unexpected tag character ‘{0}’.".Fmt(Tag)),
+    }, _children.Select(child => child.ToXml()));
 
-    internal override void textify(StringBuilder builder)
+    internal override void Textify(StringBuilder builder)
     {
         foreach (var child in _children)
-            child.textify(builder);
+            child.Textify(builder);
     }
 }
 
-/// <summary>Represents a node in the <see cref="EggsML"/> parse tree that corresponds to a piece of text.</summary>
-public sealed class EggsText : EggsNode
+/// <summary>
+///     Represents a node in the <see cref="EggsML"/> parse tree that corresponds to a piece of text.</summary>
+/// <param name="text">
+///     The text for this node to contain.</param>
+/// <param name="index">
+///     The index in the original string where this text starts.</param>
+public sealed class EggsText(string text, int index = 0) : EggsNode(index)
 {
     /// <summary>The text contained in this node.</summary>
-    public string Text { get; private set; }
-
-    /// <summary>
-    ///     Constructs a new EggsML text node.</summary>
-    /// <param name="text">
-    ///     The text for this node to contain.</param>
-    /// <param name="index">
-    ///     The index in the original string where this text starts.</param>
-    public EggsText(string text, int index = 0)
-        : base(index)
-    {
-        Text = text ?? throw new ArgumentNullException(nameof(text), "The 'text' for an EggsText node cannot be null.");
-    }
+    public string Text { get; private set; } = text ?? throw new ArgumentNullException(nameof(text), "The 'text' for an EggsText node cannot be null.");
 
     /// <summary>
     ///     Reconstructs the original EggsML that is represented by this node.</summary>
@@ -786,7 +758,7 @@ public sealed class EggsText : EggsNode
     public override string ToString() =>
         Text.Where(ch => EggsML.SpecialCharacters.Contains(ch) && ch != '"').Take(3).Count() >= 3
             ? string.Concat("\"", Text.Replace("\"", "\"\""), "\"")
-            : new string(Text.SelectMany(ch => EggsML.SpecialCharacters.Contains(ch) ? new char[] { ch, ch } : new char[] { ch }).ToArray());
+            : new string(Text.SelectMany(ch => EggsML.SpecialCharacters.Contains(ch) ? new char[] { ch, ch } : [ch]).ToArray());
 
     /// <summary>Returns an XML representation of this EggsML node.</summary>
     public override object ToXml() => Text;
@@ -794,36 +766,31 @@ public sealed class EggsText : EggsNode
     /// <summary>Determines whether this node contains any textual content.</summary>
     public override bool HasText => Text != null && Text.Length > 0;
 
-    internal override void textify(StringBuilder builder) { builder.Append(Text); }
+    internal override void Textify(StringBuilder builder) { builder.Append(Text); }
 }
 
-/// <summary>Represents a parse error encountered by the <see cref="EggsML"/> parser.</summary>
+/// <summary>
+///     Represents a parse error encountered by the <see cref="EggsML"/> parser.</summary>
+/// <param name="message">
+///     Message.</param>
+/// <param name="index">
+///     The character index into the original string where the error occurred.</param>
+/// <param name="length">
+///     The length of the text in the original string where the error occurred.</param>
+/// <param name="firstIndex">
+///     The character index of an earlier position in the original string where the error started (e.g. the start of a tag
+///     that is missing its end tag).</param>
+/// <param name="inner">
+///     An inner exception to pass to the base Exception class.</param>
 [Serializable]
-public sealed class EggsMLParseException : Exception
+public sealed class EggsMLParseException(string message, int index, int length, int? firstIndex = null, Exception inner = null) : Exception(message, inner)
 {
     /// <summary>The character index into the original string where the error occurred.</summary>
-    public int Index { get; private set; }
-
+    public int Index { get; private set; } = index;
     /// <summary>The length of the text in the original string where the error occurred.</summary>
-    public int Length { get; private set; }
-
+    public int Length { get; private set; } = length;
     /// <summary>
     ///     The character index of an earlier position in the original string where the error started (e.g. the start of a tag
     ///     that is missing its end tag).</summary>
-    public int? FirstIndex { get; private set; }
-
-    /// <summary>
-    ///     Constructor.</summary>
-    /// <param name="message">
-    ///     Message.</param>
-    /// <param name="index">
-    ///     The character index into the original string where the error occurred.</param>
-    /// <param name="length">
-    ///     The length of the text in the original string where the error occurred.</param>
-    /// <param name="firstIndex">
-    ///     The character index of an earlier position in the original string where the error started (e.g. the start of a tag
-    ///     that is missing its end tag).</param>
-    /// <param name="inner">
-    ///     An inner exception to pass to the base Exception class.</param>
-    public EggsMLParseException(string message, int index, int length, int? firstIndex = null, Exception inner = null) : base(message, inner) { Index = index; Length = length; FirstIndex = firstIndex; }
+    public int? FirstIndex { get; private set; } = firstIndex;
 }

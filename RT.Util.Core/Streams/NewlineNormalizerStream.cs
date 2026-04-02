@@ -1,4 +1,4 @@
-using RT.Util.ExtensionMethods;
+﻿using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Streams;
 
@@ -59,7 +59,7 @@ public sealed class NewlineNormalizerStream8bit : Stream
     private int _stillToOutputLength;
     private bool _ignoreOneLFRead = false;
 
-    private int outputAsMuchAsPossible(ref byte[] fromBuffer, ref int fromOffset, ref int fromCount, byte[] intoBuffer, int intoOffset, int intoCount)
+    private static int outputAsMuchAsPossible(ref byte[] fromBuffer, ref int fromOffset, ref int fromCount, byte[] intoBuffer, int intoOffset, int intoCount)
     {
         if (intoCount < fromCount)
         {
@@ -156,8 +156,7 @@ public sealed class NewlineNormalizerStream8bit : Stream
         }
 
         // We ran out of data; need to read more stuff from the underlying stream.
-        if (_lastBuffer == null)
-            _lastBuffer = new byte[65536];
+        _lastBuffer ??= new byte[65536];
         _lastBufferIndex = 0;
         _lastBufferLength = _underlyingStream.Read(_lastBuffer, 0, 65536);
         if (_lastBufferLength == 0)
@@ -424,8 +423,7 @@ public sealed class NewlineNormalizerStream16bit : Stream
             }
         }
 
-        if (_lastBuffer == null)
-            _lastBuffer = new byte[65536];
+        _lastBuffer ??= new byte[65536];
         _lastBufferIndex = 0;
         _lastBufferLength = _underlyingStream.Read(_lastBuffer, 0, 65536);
         if (_lastBufferLength == 0)

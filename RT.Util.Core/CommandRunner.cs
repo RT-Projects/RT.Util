@@ -4,8 +4,6 @@ using System.Text;
 using RT.Util.Consoles;
 using RT.Util.ExtensionMethods;
 
-#pragma warning disable CS8981    // The type name only contains lower-cased ascii characters. Such names may become reserved for the language.
-
 namespace RT.Util;
 
 /// <summary>
@@ -26,11 +24,11 @@ public class CommandRunner
     private Process _process;
     private ProcessStartInfo _startInfo;
     private reader _stdoutReader, _stderrReader;
-    private ManualResetEventSlim _started = new ManualResetEventSlim();
-    private ManualResetEventSlim _ended = new ManualResetEventSlim();
+    private ManualResetEventSlim _started = new();
+    private ManualResetEventSlim _ended = new();
     private Timer _pauseTimer;
     private DateTime? _pauseTimerDue = null;
-    private object _lock = new object();
+    private object _lock = new();
 
     /// <summary>
     ///     Raised once the command ends (that is, exits naturally or is aborted) and all the clean-up has completed. See
@@ -181,7 +179,7 @@ public class CommandRunner
     {
         get { return _envVars; }
     }
-    private Dictionary<string, string> _envVars = new Dictionary<string, string>();
+    private Dictionary<string, string> _envVars = [];
 
     /// <summary>
     ///     Credentials and parameters used to run the command as a different user. Null to run as the same user as the
@@ -239,10 +237,12 @@ public class CommandRunner
             throw new InvalidOperationException("This command has already been started, and cannot be started again.");
         State = CommandRunnerState.Started;
 
-        _startInfo = new ProcessStartInfo();
-        _startInfo.FileName = @"cmd.exe";
-        _startInfo.Arguments = "/C \"" + Command + "\"";
-        _startInfo.WorkingDirectory = WorkingDirectory;
+        _startInfo = new ProcessStartInfo
+        {
+            FileName = @"cmd.exe",
+            Arguments = "/C \"" + Command + "\"",
+            WorkingDirectory = WorkingDirectory
+        };
         foreach (var kvp in EnvironmentVariables)
             _startInfo.EnvironmentVariables.Add(kvp.Key, kvp.Value);
         _startInfo.RedirectStandardInput = stdin != null;
@@ -265,9 +265,11 @@ public class CommandRunner
         _stdoutReader = new reader(StdoutData, StdoutText, CaptureEntireStdout);
         _stderrReader = new reader(StderrData, StderrText, CaptureEntireStderr);
 
-        _process = new Process();
-        _process.EnableRaisingEvents = true;
-        _process.StartInfo = _startInfo;
+        _process = new Process
+        {
+            EnableRaisingEvents = true,
+            StartInfo = _startInfo
+        };
         _process.Exited += processExited;
         _process.Start();
         if (stdin != null)
@@ -297,8 +299,7 @@ public class CommandRunner
         lock (_lock)
         {
             _pauseTimerDue = null;
-            if (_pauseTimer != null)
-                _pauseTimer.Dispose();
+            _pauseTimer?.Dispose();
         }
         _exitCode = _process.ExitCode;
         if (State != CommandRunnerState.Aborted)
@@ -308,8 +309,7 @@ public class CommandRunner
         _process.Exited -= processExited;
         _process = null;
 
-        if (CommandEnded != null)
-            CommandEnded();
+        CommandEnded?.Invoke();
         _ended.Set();
     }
 
@@ -404,7 +404,7 @@ public class CommandRunner
         }
         return sb.ToString();
     }
-    private static readonly char[] _cmdChars = new[] { ' ', '"', '\n', '\t', '\v' };
+    private static readonly char[] _cmdChars = [' ', '"', '\n', '\t', '\v'];
 
     /// <summary>
     ///     Escapes all cmd.exe meta-characters by prefixing them with a ^. See <see
@@ -434,27 +434,17 @@ public class CommandRunner
         return result.ToString();
     }
 
-    private class reader
+    private class reader(Action<byte[]> dataEvent, Action<string> textEvent, bool captureEntire)
     {
         public bool Ended { get; private set; }
 
-        private List<chunk> _chunks = new List<chunk>();
+        private List<chunk> _chunks = [];
         private Decoder _decoder = Encoding.UTF8.GetDecoder();
-        private Action<byte[]> _dataEvent;
-        private Action<string> _textEvent;
-        private bool _captureEntire;
 
         private class chunk
         {
             public byte[] Data = new byte[32768];
             public int Length = 0;
-        }
-
-        public reader(Action<byte[]> dataEvent, Action<string> textEvent, bool captureEntire)
-        {
-            _dataEvent = dataEvent;
-            _textEvent = textEvent;
-            _captureEntire = captureEntire;
         }
 
         public void ReadBegin(Stream stream)
@@ -464,7 +454,7 @@ public class CommandRunner
             var chunk = _chunks[_chunks.Count - 1];
             if (chunk.Data.Length - chunk.Length < 1000)
             {
-                if (_captureEntire)
+                if (captureEntire)
                 {
                     chunk = new chunk();
                     _chunks.Add(chunk);
@@ -480,42 +470,38 @@ public class CommandRunner
             int bytesRead = stream.EndRead(result);
             var chunk = _chunks[_chunks.Count - 1];
             chunk.Length += bytesRead;
-            if (_dataEvent != null)
+            if (dataEvent != null)
             {
                 var newBytes = new byte[bytesRead];
                 Array.Copy(chunk.Data, chunk.Length - bytesRead, newBytes, 0, bytesRead);
-                _dataEvent(newBytes);
+                dataEvent(newBytes);
             }
-            if (_textEvent != null)
+            if (textEvent != null)
             {
                 var newChars = new char[bytesRead + 1]; // can have at most one char buffered up in the decoder, plus bytesRead new chars
-                int bytesUsed, charsUsed;
-                bool completed;
-                _decoder.Convert(chunk.Data, chunk.Length - bytesRead, bytesRead, newChars, 0, newChars.Length, false, out bytesUsed, out charsUsed, out completed);
+                _decoder.Convert(chunk.Data, chunk.Length - bytesRead, bytesRead, newChars, 0, newChars.Length, false, out _, out var charsUsed, out var completed);
                 Ut.Assert(completed); // it could still be halfway through a character; what this means is that newChars was large enough to accommodate everything
-                _textEvent(new string(newChars, 0, charsUsed));
+                textEvent(new string(newChars, 0, charsUsed));
             }
             if (bytesRead > 0) // continue reading
                 ReadBegin(stream);
             else
             {
                 Ended = true;
-                if (_textEvent != null)
+                if (textEvent != null)
                 {
                     var newChars = new char[1];
-                    int bytesUsed, charsUsed;
-                    bool completed;
-                    _decoder.Convert(new byte[0], 0, 0, newChars, 0, newChars.Length, true, out bytesUsed, out charsUsed, out completed);
+                    _decoder.Convert([], 0, 0, newChars, 0, newChars.Length, true, out _, out var charsUsed, out var completed);
                     Ut.Assert(completed);
                     if (charsUsed > 0)
-                        _textEvent(new string(newChars, 0, charsUsed));
+                        textEvent(new string(newChars, 0, charsUsed));
                 }
             }
         }
 
         public byte[] GetEntireOutput()
         {
-            Ut.Assert(_captureEntire);
+            Ut.Assert(captureEntire);
             var result = new byte[_chunks.Sum(ch => ch.Length)];
             int offset = 0;
             foreach (var chunk in _chunks)
@@ -577,19 +563,15 @@ public class CommandRunner
             if (durationNN == TimeSpan.MaxValue)
             {
                 _pauseTimerDue = DateTime.MaxValue;
-                if (_pauseTimer != null)
-                {
-                    _pauseTimer.Dispose();
-                    _pauseTimer = null;
-                }
+                _pauseTimer?.Dispose();
+                _pauseTimer = null;
             }
             else
             {
                 var newDue = DateTime.UtcNow + durationNN;
                 if (_pauseTimerDue == null || newDue > _pauseTimerDue)
                     _pauseTimerDue = newDue;
-                if (_pauseTimer == null)
-                    _pauseTimer = new Timer(resume, null, durationNN, TimeSpan.FromMilliseconds(-1));
+                _pauseTimer ??= new Timer(resume, null, durationNN, TimeSpan.FromMilliseconds(-1));
                 // else the timer will fire and, if necessary, reschedule itself to fire again later.
             }
             if (!wasPaused)
@@ -660,8 +642,7 @@ public class CommandRunner
             }
         }
 
-        if (CommandResumed != null)
-            CommandResumed();
+        CommandResumed?.Invoke();
     }
 
     /// <summary>
@@ -743,9 +724,7 @@ public class RunAsUserParams
     ///     ActiveDirectory domain of the required user account.</param>
     public RunAsUserParams(string username, SecureString password, bool loadProfile = false, string domain = null)
     {
-        if (username == null)
-            throw new ArgumentNullException(nameof(username));
-        Username = username;
+        Username = username ?? throw new ArgumentNullException(nameof(username));
         Password = password;
         LoadProfile = loadProfile;
         Domain = domain;
@@ -764,9 +743,7 @@ public class RunAsUserParams
     ///     ActiveDirectory domain of the required user account.</param>
     public RunAsUserParams(string username, string password, bool loadProfile = false, string domain = null)
     {
-        if (username == null)
-            throw new ArgumentNullException(nameof(username));
-        Username = username;
+        Username = username ?? throw new ArgumentNullException(nameof(username));
         Password = new SecureString();
         foreach (var c in password)
             Password.AppendChar(c);
@@ -779,7 +756,7 @@ public class RunAsUserParams
 /// <summary>Implements method chaining for <see cref="CommandRunner.Run"/>.</summary>
 public class FluidCommandRunner
 {
-    private CommandRunner _runner = new CommandRunner();
+    private CommandRunner _runner = new();
     private HashSet<int> _successExitCodes;
     private HashSet<int> _failExitCodes;
     private bool _printCommandOutput = true;
@@ -802,8 +779,7 @@ public class FluidCommandRunner
     {
         if (_failExitCodes != null)
             throw new InvalidOperationException("Cannot use both SuccessExitCodes and FailExitCodes for the same command invocation.");
-        if (_successExitCodes == null)
-            _successExitCodes = new HashSet<int>();
+        _successExitCodes ??= [];
         _successExitCodes.AddRange(exitCodes);
         return this;
     }
@@ -815,8 +791,7 @@ public class FluidCommandRunner
     {
         if (_successExitCodes != null)
             throw new InvalidOperationException("Cannot use both SuccessExitCodes and FailExitCodes for the same command invocation.");
-        if (_failExitCodes == null)
-            _failExitCodes = new HashSet<int>();
+        _failExitCodes ??= [];
         _failExitCodes.AddRange(exitCodes);
         return this;
     }
@@ -936,14 +911,8 @@ public class FluidCommandRunner
 }
 
 /// <summary>Indicates that a command returned an exit code indicating a failure.</summary>
-public class CommandRunnerFailedException : Exception
+public class CommandRunnerFailedException(int exitCode) : Exception("Command failed with exit code {0}".Fmt(exitCode))
 {
     /// <summary>The exit code returned.</summary>
-    public int ExitCode { get; private set; }
-    /// <summary>Constructor.</summary>
-    public CommandRunnerFailedException(int exitCode)
-        : base("Command failed with exit code {0}".Fmt(exitCode))
-    {
-        ExitCode = exitCode;
-    }
+    public int ExitCode { get; private set; } = exitCode;
 }

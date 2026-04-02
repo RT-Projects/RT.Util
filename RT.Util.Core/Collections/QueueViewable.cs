@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Collections;
@@ -75,13 +75,13 @@ public sealed class QueueViewable<T> : IEnumerable<T>, ICollection<T>, IList<T>
         get
         {
             if (index >= _count)
-                throw new ArgumentException("Cannot access element at index {0} because only {1} elements are in the queue".Fmt(index, _count), "index");
+                throw new ArgumentException("Cannot access element at index {0} because only {1} elements are in the queue".Fmt(index, _count), nameof(index));
             return _data[(_head + index) % _data.Length];
         }
         set
         {
             if (index >= _count)
-                throw new ArgumentException("Cannot set element at index {0} because only {1} elements are in the queue. Use Enqueue instead.".Fmt(index, _count), "index");
+                throw new ArgumentException("Cannot set element at index {0} because only {1} elements are in the queue. Use Enqueue instead.".Fmt(index, _count), nameof(index));
             _data[(_head + index) % _data.Length] = value;
         }
     }
@@ -167,12 +167,7 @@ public sealed class QueueViewable<T> : IEnumerable<T>, ICollection<T>, IList<T>
     /// <summary>
     ///     Returns a read-only wrapper for this collection. Any changes to this collection will be immediately visible
     ///     through the wrapper.</summary>
-    public ICollection<T> AsReadOnly()
-    {
-        if (_asReadOnly == null)
-            _asReadOnly = new ReadOnlyCollection<T>(this);
-        return _asReadOnly;
-    }
+    public ICollection<T> AsReadOnly() => _asReadOnly ??= new ReadOnlyCollection<T>(this);
 
     /// <summary>Not implemented.</summary>
     public int IndexOf(T item) { throw new NotImplementedException(); }

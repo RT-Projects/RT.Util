@@ -1,4 +1,4 @@
-using RT.KitchenSink.Collections;
+﻿using RT.KitchenSink.Collections;
 
 #pragma warning disable 1591
 
@@ -19,9 +19,7 @@ public sealed class LexTokenizer : LazyList<Token>
         {
             if (swallowWhitespace)
                 reader.ConsumeAnyWhitespace();
-            var token = tokenParsers.Select(p => p.ParseToken(reader)).FirstOrDefault(t => t != null);
-            if (token == null)
-                throw new LexException(reader.GetPosition(), "Unrecognized sequence of characters.");
+            var token = tokenParsers.Select(p => p.ParseToken(reader)).FirstOrDefault(t => t != null) ?? throw new LexException(reader.GetPosition(), "Unrecognized sequence of characters.");
             var type = token.GetType();
             if (!ignoreTokens.Contains(type))
                 yield return token;

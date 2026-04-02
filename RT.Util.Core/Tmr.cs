@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace RT.Util;
 
@@ -12,16 +12,16 @@ namespace RT.Util;
 public abstract class Tmr<T>
 {
     /// <summary>
-    ///     Expected to return the amount of time elapsed since the last call to <see cref="zero"/>, plus the specified
+    ///     Expected to return the amount of time elapsed since the last call to <see cref="ZeroImpl"/>, plus the specified
     ///     additional amount of time.</summary>
     /// <param name="add">
-    ///     A length of time to be added to the actual time elapsed since the last call to <see cref="zero"/>.</param>
-    protected abstract T read(T add);
+    ///     A length of time to be added to the actual time elapsed since the last call to <see cref="ZeroImpl"/>.</param>
+    protected abstract T Read(T add);
 
     /// <summary>
-    ///     Expected to zero the timer, so that future calls to <see cref="read"/> return a value relative to the last time
+    ///     Expected to zero the timer, so that future calls to <see cref="Read"/> return a value relative to the last time
     ///     this method was called.</summary>
-    protected abstract void zero();
+    protected abstract void ZeroImpl();
 
     private bool _running = false;
     private T _pausedAt;
@@ -29,7 +29,7 @@ public abstract class Tmr<T>
     /// <summary>
     ///     Gets the current reading of the timer. This value increases between consecutive reads while the timer is running,
     ///     and remains fixed while it's paused.</summary>
-    public T Current { get { return _running ? read(_pausedAt) : _pausedAt; } }
+    public T Current { get { return _running ? Read(_pausedAt) : _pausedAt; } }
     /// <summary>
     ///     Gets the reading the timer had just before the last call to any of the methods of this class related to zeroing,
     ///     pausing and resuming the timer.</summary>
@@ -38,15 +38,15 @@ public abstract class Tmr<T>
     /// <summary>Instantiates the timer. The timer will be zeroed, and it will not be running.</summary>
     public Tmr()
     {
-        zero();
+        ZeroImpl();
     }
 
     /// <summary>Resets the timer back to zero.</summary>
     public Tmr<T> Zero()
     {
         Last = Current;
-        _pausedAt = default(T);
-        zero();
+        _pausedAt = default;
+        ZeroImpl();
         return this;
     }
 
@@ -55,8 +55,8 @@ public abstract class Tmr<T>
     {
         Last = Current;
         _running = true;
-        _pausedAt = default(T);
-        zero();
+        _pausedAt = default;
+        ZeroImpl();
         return this;
     }
 
@@ -65,8 +65,8 @@ public abstract class Tmr<T>
     {
         Last = Current;
         _running = false;
-        _pausedAt = default(T);
-        zero();
+        _pausedAt = default;
+        ZeroImpl();
         return this;
     }
 
@@ -87,7 +87,7 @@ public abstract class Tmr<T>
     {
         if (!_running)
         {
-            zero();
+            ZeroImpl();
             _running = true;
         }
         return this;
@@ -102,15 +102,14 @@ public class TmrSeconds : Tmr<double>
     private long _start = 0;
 
     /// <summary>Override; see base.</summary>
-    protected override double read(double add)
+    protected override double Read(double add)
     {
-        long now;
-        QueryPerformanceCounter(out now);
+        QueryPerformanceCounter(out var now);
         return add + ((double) (now - _start)) / (double) _performanceFreq;
     }
 
     /// <summary>Override; see base.</summary>
-    protected override void zero()
+    protected override void ZeroImpl()
     {
         QueryPerformanceCounter(out _start);
     }
@@ -150,10 +149,9 @@ public sealed class TmrCycles : Tmr<long>
     private long _calibrationCycles;
 
     /// <summary>Override; see base.</summary>
-    protected override long read(long add)
+    protected override long Read(long add)
     {
-        ulong tocCycles;
-        QueryThreadCycleTime(_threadHandle, out tocCycles);
+        QueryThreadCycleTime(_threadHandle, out var tocCycles);
         return add + (long) tocCycles - (long) _ticCycles - _calibrationCycles;
     }
 
@@ -182,7 +180,7 @@ public sealed class TmrCycles : Tmr<long>
     }
 
     /// <summary>Override; see base.</summary>
-    protected override void zero()
+    protected override void ZeroImpl()
     {
         QueryThreadCycleTime(_threadHandle, out _ticCycles);
     }

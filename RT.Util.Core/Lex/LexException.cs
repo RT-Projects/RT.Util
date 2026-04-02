@@ -1,21 +1,15 @@
-#pragma warning disable 1591
+﻿#pragma warning disable 1591
 
 namespace RT.KitchenSink.Lex;
 
-public sealed class LexException : Exception
+public sealed class LexException(LexPosition errorPosition, string errorDescription) : Exception
 {
     private bool _frozen = false;
-    private List<PositionWithDescription> _additionalPositions = new List<PositionWithDescription>();
+    private List<PositionWithDescription> _additionalPositions = [];
 
-    public LexPosition ErrorPosition { get; private set; }
-    public string ErrorDescription { get; private set; }
+    public LexPosition ErrorPosition { get; private set; } = errorPosition;
+    public string ErrorDescription { get; private set; } = errorDescription;
     public IList<PositionWithDescription> AdditionalPositions { get { return _additionalPositions.AsReadOnly(); } }
-
-    public LexException(LexPosition errorPosition, string errorDescription)
-    {
-        ErrorPosition = errorPosition;
-        ErrorDescription = errorDescription;
-    }
 
     public LexException AddPosition(LexPosition position, string description)
     {
@@ -32,14 +26,9 @@ public sealed class LexException : Exception
         return this;
     }
 
-    public sealed class PositionWithDescription
+    public sealed class PositionWithDescription(LexPosition position, string description)
     {
-        public LexPosition Position { get; private set; }
-        public string Description { get; private set; }
-        public PositionWithDescription(LexPosition position, string description)
-        {
-            Position = position;
-            Description = description;
-        }
+        public LexPosition Position { get; private set; } = position;
+        public string Description { get; private set; } = description;
     }
 }

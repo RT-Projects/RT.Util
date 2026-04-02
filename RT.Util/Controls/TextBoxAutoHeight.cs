@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace RT.Util.Controls;
 
@@ -8,7 +8,7 @@ namespace RT.Util.Controls;
 public sealed class TextBoxAutoHeight : TextBoxEx
 {
     [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = false)]
-    static extern IntPtr SendMessage(IntPtr hWnd, Int32 Msg, IntPtr wParam, IntPtr lParam);
+    static extern IntPtr SendMessage(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);
 
     private int _lastWidth;
     private int _lastWidthResult;

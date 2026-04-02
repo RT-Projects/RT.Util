@@ -80,8 +80,8 @@ static partial class Ut
     ///     Result of the SHA1 hash function as a string of hexadecimal digits.</returns>
     public static string Sha1(string path)
     {
-        using (var f = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-            return SHA1.Create().ComputeHash(f).ToHex();
+        using var f = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        return SHA1.Create().ComputeHash(f).ToHex();
     }
 
     /// <summary>
@@ -92,8 +92,8 @@ static partial class Ut
     ///     Result of the MD5 hash function as a string of hexadecimal digits.</returns>
     public static string Md5(string path)
     {
-        using (var f = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-            return MD5.Create().ComputeHash(f).ToHex();
+        using var f = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        return MD5.Create().ComputeHash(f).ToHex();
     }
 
     /// <summary>Returns the version of the entry assembly (the .exe file) in a standard format.</summary>
@@ -415,14 +415,6 @@ static partial class Ut
         System.Threading.ThreadPool.QueueUserWorkItem(_ => task());
     }
 
-    /// <summary>Swaps the values of the specified two variables.</summary>
-    public static void Swap<T>(ref T one, ref T two)
-    {
-        T t = one;
-        one = two;
-        two = t;
-    }
-
     /// <summary>
     ///     Finds the longest substring that all of the specified input strings contain.</summary>
     /// <param name="strings">
@@ -554,9 +546,9 @@ static partial class Ut
             ? ((long) buffer[index] << 56) | ((long) buffer[index + 1] << 48) | ((long) buffer[index + 2] << 40) | ((long) buffer[index + 3] << 32) | ((long) buffer[index + 4] << 24) | ((long) buffer[index + 5] << 16) | ((long) buffer[index + 6] << 8) | buffer[index + 7]
             : buffer[index] | ((long) buffer[index + 1] << 8) | ((long) buffer[index + 2] << 16) | ((long) buffer[index + 3] << 24) | ((long) buffer[index + 4] << 32) | ((long) buffer[index + 5] << 40) | ((long) buffer[index + 6] << 48) | ((long) buffer[index + 7] << 56);
 
-    private static class EnumAttributeCache<TAttribute>
+    private static class enumAttributeCache<TAttribute>
     {
-        public static Dictionary<Type, Dictionary<Enum, TAttribute[]>> Dictionary = new Dictionary<Type, Dictionary<Enum, TAttribute[]>>();
+        public static Dictionary<Type, Dictionary<Enum, TAttribute[]>> Dictionary = [];
     }
 
     /// <summary>
@@ -608,7 +600,7 @@ static partial class Ut
         if (arrays.Contains(null))
             throw new ArgumentNullException(nameof(arrays));
         if (arrays.Length == 0)
-            return new T[0];
+            return [];
         if (arrays.Length == 1)
             return (T[]) arrays[0].Clone();
         T[] result = new T[arrays.Sum(a => a.Length)];
@@ -657,7 +649,7 @@ static partial class Ut
             result.Append((char) (b < 10 ? '0' + b : 'W' + b));
             i++;
             if (spacesEvery != 0 && i % spacesEvery == 0)
-                result.Append(" ");
+                result.Append(' ');
         }
         return result.ToString();
     }

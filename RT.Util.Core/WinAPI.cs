@@ -1,4 +1,4 @@
-using System.Drawing;
+﻿using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -87,7 +87,7 @@ public static class WinAPI
 
     #region Constants
 
-    public static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
+    public static readonly IntPtr INVALID_HANDLE_VALUE = new(-1);
 
     // Low-Level Keyboard Constants
     public const int HC_ACTION = 0;
@@ -283,8 +283,10 @@ public static class WinAPI
 
     [DllImport("Kernel32.dll")]
     public static extern bool QueryPerformanceCounter(out long lpPerformanceCount);
-    public static long QueryPerformanceCounter() { long result; if (!QueryPerformanceCounter(out result)) throw new InvalidOperationException("QueryPerformanceCounter failed"); return result; }
-    public static double QueryPerformanceCounterSec() { long result; if (!QueryPerformanceCounter(out result)) throw new InvalidOperationException("QueryPerformanceCounter failed"); return result / (double) WinAPI.PerformanceFreq; }
+    public static long QueryPerformanceCounter() => QueryPerformanceCounter(out var result) ? result : throw new InvalidOperationException("QueryPerformanceCounter failed");
+    public static double QueryPerformanceCounterSec() => QueryPerformanceCounter(out var result)
+            ? result / (double) PerformanceFreq
+            : throw new InvalidOperationException("QueryPerformanceCounter failed");
 
     [DllImport("Kernel32.dll")]
     private static extern bool QueryPerformanceFrequency(out long lpFrequency);

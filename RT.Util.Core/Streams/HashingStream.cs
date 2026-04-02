@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 
 namespace RT.Util.Streams;
 
@@ -86,7 +86,7 @@ public sealed class HashingStream : Stream
         {
             if (_hasher != null)
             {
-                _hasher.TransformFinalBlock(new byte[] { }, 0, 0);
+                _hasher.TransformFinalBlock([], 0, 0);
                 _result = _hasher.Hash;
             }
 

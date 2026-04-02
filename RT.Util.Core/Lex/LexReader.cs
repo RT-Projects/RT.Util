@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 #pragma warning disable 1591
 
@@ -12,9 +12,7 @@ public sealed class LexReader
 
     public LexReader(string text)
     {
-        if (text == null)
-            throw new InvalidOperationException("text argument cannot be null");
-        _text = text;
+        _text = text ?? throw new InvalidOperationException("text argument cannot be null");
         _offset = 0;
 
         // Build a list containing the offset of the starting character of every line in the template

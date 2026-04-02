@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Util;
@@ -13,7 +13,7 @@ public sealed class MultipartFormDataHelper
 {
     private HttpWebRequest _request;
     private Stream _stream;
-    private static readonly byte[] _bytesNewline = new byte[] { 13, 10 };
+    private static readonly byte[] _bytesNewline = [13, 10];
     private byte[] _bytesBoundary, _bytesBoundaryLast;
     private MultipartFileStream _currentFileStream;
 
@@ -26,9 +26,7 @@ public sealed class MultipartFormDataHelper
     ///     modify request headers until the first call to an Add* method.</param>
     public MultipartFormDataHelper(HttpWebRequest request)
     {
-        if (request == null)
-            throw new ArgumentNullException(nameof(request));
-        _request = request;
+        _request = request ?? throw new ArgumentNullException(nameof(request));
         var boundary = Rnd.NextBytes(15).ToHex();
         _bytesBoundary = ("--" + boundary + "\r\n").ToUtf8();
         _bytesBoundaryLast = ("--" + boundary + "--\r\n").ToUtf8();
@@ -43,11 +41,8 @@ public sealed class MultipartFormDataHelper
     {
         if (_request == null)
             throw new InvalidOperationException("The request has already been sent in full. This operation is no longer legal.");
-        if (_currentFileStream != null)
-        {
-            _currentFileStream.Close();
-            _currentFileStream = null;
-        }
+        _currentFileStream?.Close();
+        _currentFileStream = null;
         stream.Write(_bytesBoundaryLast);
         var result = (HttpWebResponse) _request.GetResponse();
         _request = null;
@@ -58,8 +53,7 @@ public sealed class MultipartFormDataHelper
     {
         get
         {
-            if (_stream == null)
-                _stream = _request.GetRequestStream();
+            _stream ??= _request.GetRequestStream();
             return _stream;
         }
     }
@@ -80,11 +74,8 @@ public sealed class MultipartFormDataHelper
             throw new ArgumentNullException(nameof(value));
         if (_request == null)
             throw new InvalidOperationException("The request has already been sent in full. This operation is no longer legal.");
-        if (_currentFileStream != null)
-        {
-            _currentFileStream.Close();
-            _currentFileStream = null;
-        }
+        _currentFileStream?.Close();
+        _currentFileStream = null;
         stream.Write(_bytesBoundary);
         stream.Write("Content-Disposition: form-data; name=\"".ToUtf8());
         stream.Write(name.ToUtf8()); // there is no compatible way of doing this, so might as well just go the utf8-everywhere route...
@@ -117,11 +108,8 @@ public sealed class MultipartFormDataHelper
             throw new ArgumentNullException(nameof(filename));
         if (_request == null)
             throw new InvalidOperationException("The request has already been sent in full. This operation is no longer legal.");
-        if (_currentFileStream != null)
-        {
-            _currentFileStream.Close();
-            _currentFileStream = null;
-        }
+        _currentFileStream?.Close();
+        _currentFileStream = null;
         stream.Write(_bytesBoundary);
         stream.Write("Content-Disposition: form-data; name=\"".ToUtf8());
         stream.Write(name.ToUtf8()); // there is no compatible way of doing this, so might as well just go the utf8-everywhere route...
@@ -157,8 +145,8 @@ public sealed class MultipartFormDataHelper
     {
         if (data == null)
             throw new ArgumentNullException(nameof(data));
-        using (var filestream = AddFile(name, filename, contentType))
-            filestream.Write(data);
+        using var filestream = AddFile(name, filename, contentType);
+        filestream.Write(data);
     }
 
     /// <summary>

@@ -1,4 +1,4 @@
-namespace RT.Util.Collections;
+﻿namespace RT.Util.Collections;
 
 /// <summary>
 ///     Encapsulates a list which dynamically grows as items are written to non-existent indexes. Any gaps are populated with
@@ -29,7 +29,7 @@ public class AutoList<T> : IList<T>
             // default(T) cannot possibly create a value that we'd need to store immediately in order to preserve the infinite list illusion,
             // so do not grow the list for this if the user supplied no initializer.
             if (_initializer == null)
-                return index >= Count ? default(T) : _inner[index];
+                return index >= Count ? default : _inner[index];
 
             fill(index + 1);
             return _inner[index];
@@ -47,7 +47,7 @@ public class AutoList<T> : IList<T>
         if (index < 0)
             throw new ArgumentOutOfRangeException(nameof(index), "'index' cannot be negative.");
         while (index > Count)
-            Add(_initializer == null ? default(T) : _initializer(Count));
+            Add(_initializer == null ? default : _initializer(Count));
     }
     private void fill(int index, int count)
     {
@@ -63,7 +63,7 @@ public class AutoList<T> : IList<T>
     ///     <c>default(T)</c> is used instead.</param>
     public AutoList(Func<int, T> initializer = null)
     {
-        _inner = new List<T>();
+        _inner = [];
         _initializer = initializer;
     }
 
@@ -89,12 +89,12 @@ public class AutoList<T> : IList<T>
     ///     <c>default(T)</c> is used instead.</param>
     public AutoList(IEnumerable<T> collection, Func<int, T> initializer = null)
     {
-        _inner = new List<T>(collection);
+        _inner = collection.ToList();
         _initializer = initializer;
     }
 
     /// <summary>Equivalent to the same method in <see cref="List{T}"/>.</summary>
-    public int IndexOf(T item) { return _inner.IndexOf(item); }
+    public int IndexOf(T item) => _inner.IndexOf(item);
     /// <summary>Equivalent to the same method in <see cref="List{T}"/>.</summary>
     public void Insert(int index, T item) { fill(index); _inner.Insert(index, item); }
     /// <summary>Equivalent to the same method in <see cref="List{T}"/>.</summary>
@@ -104,26 +104,26 @@ public class AutoList<T> : IList<T>
     /// <summary>Equivalent to the same method in <see cref="List{T}"/>.</summary>
     public void Clear() { _inner.Clear(); }
     /// <summary>Equivalent to the same method in <see cref="List{T}"/>.</summary>
-    public bool Contains(T item) { return _inner.Contains(item); }
+    public bool Contains(T item) => _inner.Contains(item);
     /// <summary>Equivalent to the same method in <see cref="List{T}"/>.</summary>
     public void CopyTo(T[] array, int arrayIndex) { _inner.CopyTo(array, arrayIndex); }
     /// <summary>Equivalent to the same property in <see cref="List{T}"/>.</summary>
-    public int Count { get { return _inner.Count; } }
+    public int Count => _inner.Count;
     /// <summary>Equivalent to the same property in <see cref="List{T}"/>.</summary>
-    public bool IsReadOnly { get { return false; } }
+    public bool IsReadOnly => false;
     /// <summary>Equivalent to the same method in <see cref="List{T}"/>.</summary>
-    public bool Remove(T item) { return _inner.Remove(item); }
+    public bool Remove(T item) => _inner.Remove(item);
     /// <summary>Equivalent to the same method in <see cref="List{T}"/>.</summary>
-    public IEnumerator<T> GetEnumerator() { return _inner.GetEnumerator(); }
+    public IEnumerator<T> GetEnumerator() => _inner.GetEnumerator();
 
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return _inner.GetEnumerator(); }
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => _inner.GetEnumerator();
 
     /// <summary>Equivalent to the same method in <see cref="List{T}"/>.</summary>
     public void AddRange(IEnumerable<T> item) { _inner.AddRange(item); }
     /// <summary>Equivalent to the same method in <see cref="List{T}"/>.</summary>
-    public ReadOnlyCollection<T> AsReadOnly() { return new ReadOnlyCollection<T>(this); }
+    public ReadOnlyCollection<T> AsReadOnly() => new(this);
     /// <summary>Equivalent to the same method in <see cref="List{T}"/>.</summary>
-    public int BinarySearch(T item) { return _inner.BinarySearch(item); }
+    public int BinarySearch(T item) => _inner.BinarySearch(item);
     /// <summary>Equivalent to the same property in <see cref="List{T}"/>.</summary>
     public int Capacity
     {
@@ -178,7 +178,7 @@ public class AutoList<T> : IList<T>
             throw new ArgumentOutOfRangeException(nameof(count), "'count' cannot be negative.");
         fill(index, count);
         while (_inner.Count < index + count)
-            _inner.Add(_initializer == null ? default(T) : _initializer(_inner.Count));
+            _inner.Add(_initializer == null ? default : _initializer(_inner.Count));
         var list = new AutoList<T>(count);
         for (int i = 0; i < count; i++)
             list.Add(_inner[i + index]);

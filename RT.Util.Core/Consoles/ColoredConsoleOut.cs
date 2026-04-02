@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 
 namespace RT.Util.Consoles;
 
@@ -7,18 +7,11 @@ namespace RT.Util.Consoles;
 /// <remarks>
 ///     Every time a string is output to the console, the current console foreground colour is remembered and returned to its
 ///     previous value after the output.</remarks>
-public sealed class ColoredConsoleOut : TextWriter
+/// <param name="color">
+///     Specifies the colour in which to output text to the console.</param>
+public sealed class ColoredConsoleOut(ConsoleColor color) : TextWriter
 {
-    private ConsoleColor _color;
-
-    /// <summary>
-    ///     Constructor.</summary>
-    /// <param name="color">
-    ///     Specifies the colour in which to output text to the console.</param>
-    public ColoredConsoleOut(ConsoleColor color) { _color = color; }
-
-    /// <summary>
-    ///     <see cref="TextWriter"/> requires this to be overridden. This returns <see cref="System.Text.Encoding.UTF8"/>.</summary>
+    /// <summary><see cref="TextWriter"/> requires this to be overridden. This returns <see cref="Encoding.UTF8"/>.</summary>
     public override Encoding Encoding { get { return Encoding.UTF8; } }
 
     /// <summary>Writes the specified character to the console.</summary>
@@ -31,7 +24,7 @@ public sealed class ColoredConsoleOut : TextWriter
     public override void Write(string value)
     {
         var before = Console.ForegroundColor;
-        Console.ForegroundColor = _color;
+        Console.ForegroundColor = color;
         Console.Write(value);
         Console.ForegroundColor = before;
     }

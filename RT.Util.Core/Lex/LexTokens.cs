@@ -1,19 +1,13 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 #pragma warning disable 1591
 
 namespace RT.KitchenSink.Lex;
 
-public abstract class Token
+public abstract class Token(LexPosition start, LexPosition end)
 {
-    public LexPosition StartLocation { get; private set; }
-    public LexPosition EndLocation { get; private set; }
-
-    public Token(LexPosition start, LexPosition end)
-    {
-        StartLocation = start;
-        EndLocation = end;
-    }
+    public LexPosition StartLocation { get; private set; } = start;
+    public LexPosition EndLocation { get; private set; } = end;
 
     public abstract class Parser
     {
@@ -30,10 +24,8 @@ public abstract class Token
     }
 }
 
-public sealed class EndOfFileToken : Token
+public sealed class EndOfFileToken(LexPosition location) : Token(location, location)
 {
-    public EndOfFileToken(LexPosition location) : base(location, location) { }
-
     public new sealed class Parser : Token.Parser
     {
         public override Token ParseToken(LexReader reader)
@@ -46,24 +38,13 @@ public sealed class EndOfFileToken : Token
     }
 }
 
-public sealed class BuiltinToken : Token
+public sealed class BuiltinToken(LexPosition start, LexPosition end, string @operator) : Token(start, end)
 {
-    public string Builtin { get; private set; }
+    public string Builtin { get; private set; } = @operator;
 
-    public BuiltinToken(LexPosition start, LexPosition end, string @operator)
-        : base(start, end)
+    public new sealed class Parser(IEnumerable<string> operators) : Token.Parser
     {
-        Builtin = @operator;
-    }
-
-    public new sealed class Parser : Token.Parser
-    {
-        private string[] _operators;
-
-        public Parser(IEnumerable<string> operators)
-        {
-            _operators = operators.OrderByDescending(o => o.Length).ToArray();
-        }
+        private string[] _operators = operators.OrderByDescending(o => o.Length).ToArray();
 
         public Parser(params string[] operators)
             : this((IEnumerable<string>) operators)
@@ -84,19 +65,17 @@ public sealed class BuiltinToken : Token
     }
 }
 
-public sealed class StringLiteralToken : Token
+public sealed class StringLiteralToken(LexPosition start, LexPosition end) : Token(start, end)
 {
     public string Value { get; private set; }
 
-    public StringLiteralToken(LexPosition start, LexPosition end) : base(start, end) { }
-
-    public new sealed class Parser : Token.Parser
+    public new sealed class Parser(IDictionary<char, char> basicEscapes, IDictionary<char, Func<LexReader, string>> advancedEscapes, string openingSequence, string closingSequence, bool escapeClosingByDoubling) : Token.Parser
     {
-        public IDictionary<char, char> BasicEscapes { get; private set; }
-        public IDictionary<char, Func<LexReader, string>> AdvancedEscapes { get; private set; }
-        public string OpeningSequence { get; private set; }
-        public string ClosingSequence { get; private set; }
-        public bool EscapeClosingByDoubling { get; private set; }
+        public IDictionary<char, char> BasicEscapes { get; private set; } = basicEscapes;
+        public IDictionary<char, Func<LexReader, string>> AdvancedEscapes { get; private set; } = advancedEscapes;
+        public string OpeningSequence { get; private set; } = openingSequence;
+        public string ClosingSequence { get; private set; } = closingSequence;
+        public bool EscapeClosingByDoubling { get; private set; } = escapeClosingByDoubling;
 
         public Parser(string openingSequence, string closingSequence, bool escapeClosingByDoubling)
             : this(null, null, openingSequence, closingSequence, escapeClosingByDoubling)
@@ -108,15 +87,6 @@ public sealed class StringLiteralToken : Token
         {
         }
 
-        public Parser(IDictionary<char, char> basicEscapes, IDictionary<char, Func<LexReader, string>> advancedEscapes, string openingSequence, string closingSequence, bool escapeClosingByDoubling)
-        {
-            BasicEscapes = basicEscapes;
-            AdvancedEscapes = advancedEscapes;
-            OpeningSequence = openingSequence;
-            ClosingSequence = closingSequence;
-            EscapeClosingByDoubling = escapeClosingByDoubling;
-        }
-
         public override Token ParseToken(LexReader reader)
         {
             var start = reader.GetPosition();
@@ -126,32 +96,19 @@ public sealed class StringLiteralToken : Token
     }
 }
 
-public sealed class IdentifierToken : Token
+public sealed class IdentifierToken(LexPosition start, LexPosition end, string identifier) : Token(start, end)
 {
-    public string Identifier { get; private set; }
-
-    public IdentifierToken(LexPosition start, LexPosition end, string identifier)
-        : base(start, end)
-    {
-        Identifier = identifier;
-    }
+    public string Identifier { get; private set; } = identifier;
 }
 
-public sealed class CommentToken : Token
+public sealed class CommentToken(LexPosition start, LexPosition end) : Token(start, end)
 {
-    public CommentToken(LexPosition start, LexPosition end) : base(start, end) { }
 }
 
-public sealed class RegexTokenParser<TToken> : Token.Parser where TToken : Token
+public sealed class RegexTokenParser<TToken>(Regex regex, Func<LexPosition, LexPosition, string, TToken> init) : Token.Parser where TToken : Token
 {
-    public Regex Regex { get; private set; }
-    public Func<LexPosition, LexPosition, string, TToken> Init { get; private set; }
-
-    public RegexTokenParser(Regex regex, Func<LexPosition, LexPosition, string, TToken> init)
-    {
-        Regex = regex;
-        Init = init;
-    }
+    public Regex Regex { get; private set; } = regex;
+    public Func<LexPosition, LexPosition, string, TToken> Init { get; private set; } = init;
 
     public override Token ParseToken(LexReader reader)
     {

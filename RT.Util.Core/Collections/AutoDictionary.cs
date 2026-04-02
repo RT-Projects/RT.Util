@@ -20,7 +20,7 @@ public class AutoDictionary<TKey, TValue> : IDictionary<TKey, TValue>
         {
             if (_inner.TryGetValue(key, out TValue v))
                 return v;
-            v = _initializer == null ? default(TValue) : _initializer(key);
+            v = _initializer == null ? default : _initializer(key);
             _inner.Add(key, v);
             return v;
         }
@@ -34,7 +34,7 @@ public class AutoDictionary<TKey, TValue> : IDictionary<TKey, TValue>
     /// <summary>Constructor.</summary>
     public AutoDictionary(Func<TKey, TValue> initializer = null)
     {
-        _inner = new Dictionary<TKey, TValue>();
+        _inner = [];
         _initializer = initializer;
     }
     /// <summary>Constructor.</summary>
@@ -88,7 +88,7 @@ public class AutoDictionary<TKey, TValue> : IDictionary<TKey, TValue>
     /// <summary>Equivalent to the same method in <see cref="Dictionary{TKey,TValue}"/>.</summary>
     public Dictionary<TKey, TValue>.Enumerator GetEnumerator() { return _inner.GetEnumerator(); }
     /// <summary>Equivalent to the same method in <see cref="Dictionary{TKey,TValue}"/>.</summary>
-    [Obsolete]
+    [Obsolete("This method is obsolete.")]
     public virtual void GetObjectData(SerializationInfo info, StreamingContext context) { _inner.GetObjectData(info, context); }
     /// <summary>Equivalent to the same method in <see cref="Dictionary{TKey,TValue}"/>.</summary>
     public virtual void OnDeserialization(object sender) { _inner.OnDeserialization(sender); }
@@ -115,12 +115,12 @@ public class AutoDictionary<TKey1, TKey2, TValue> : AutoDictionary<TKey1, AutoDi
 {
     /// <summary>Constructor.</summary>
     public AutoDictionary(Func<TKey1, TKey2, TValue> initializer = null)
-        : base(key1 => new AutoDictionary<TKey2, TValue>(key2 => initializer == null ? default(TValue) : initializer(key1, key2)))
+        : base(key1 => new AutoDictionary<TKey2, TValue>(key2 => initializer == null ? default : initializer(key1, key2)))
     { }
 
     /// <summary>Constructor.</summary>
     public AutoDictionary(IEqualityComparer<TKey1> comparer1, IEqualityComparer<TKey2> comparer2, Func<TKey1, TKey2, TValue> initializer = null)
-        : base(comparer1, key1 => new AutoDictionary<TKey2, TValue>(comparer2, key2 => initializer == null ? default(TValue) : initializer(key1, key2)))
+        : base(comparer1, key1 => new AutoDictionary<TKey2, TValue>(comparer2, key2 => initializer == null ? default : initializer(key1, key2)))
     { }
 }
 
@@ -129,11 +129,11 @@ public class AutoDictionary<TKey1, TKey2, TKey3, TValue> : AutoDictionary<TKey1,
 {
     /// <summary>Constructor.</summary>
     public AutoDictionary(Func<TKey1, TKey2, TKey3, TValue> initializer = null)
-        : base(key1 => new AutoDictionary<TKey2, AutoDictionary<TKey3, TValue>>(key2 => new AutoDictionary<TKey3, TValue>(key3 => initializer == null ? default(TValue) : initializer(key1, key2, key3))))
+        : base(key1 => new AutoDictionary<TKey2, AutoDictionary<TKey3, TValue>>(key2 => new AutoDictionary<TKey3, TValue>(key3 => initializer == null ? default : initializer(key1, key2, key3))))
     { }
 
     /// <summary>Constructor.</summary>
     public AutoDictionary(IEqualityComparer<TKey1> comparer1, IEqualityComparer<TKey2> comparer2, IEqualityComparer<TKey3> comparer3, Func<TKey1, TKey2, TKey3, TValue> initializer = null)
-        : base(comparer1, key1 => new AutoDictionary<TKey2, AutoDictionary<TKey3, TValue>>(comparer2, key2 => new AutoDictionary<TKey3, TValue>(comparer3, key3 => initializer == null ? default(TValue) : initializer(key1, key2, key3))))
+        : base(comparer1, key1 => new AutoDictionary<TKey2, AutoDictionary<TKey3, TValue>>(comparer2, key2 => new AutoDictionary<TKey3, TValue>(comparer3, key3 => initializer == null ? default : initializer(key1, key2, key3))))
     { }
 }

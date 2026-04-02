@@ -1,4 +1,4 @@
-namespace RT.KitchenSink.Collections;
+﻿namespace RT.KitchenSink.Collections;
 
 /// <summary>
 ///     Exposes an IEnumerable&lt;T&gt; as an IList&lt;T&gt;, enabling buffering of and indexing into the elements generated
@@ -25,8 +25,8 @@ public class LazyList<T> : IList<T>, IDisposable
     /// <summary>Disposes of the enumerable's enumerator, if one is held at the moment.</summary>
     public void Dispose()
     {
-        if (_enumerator != null)
-            _enumerator.Dispose();
+        _enumerator?.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     /// <summary>Checks whether the specified index is a valid index, i.e. not out-of-range.</summary>
@@ -40,8 +40,7 @@ public class LazyList<T> : IList<T>, IDisposable
 
     private void ensureEnumeratedUpToIndex(int index)
     {
-        if (_list == null)
-            _list = new List<T>();
+        _list ??= [];
         if (_enumerator != null)
             while (_list.Count <= index)
             {
@@ -57,8 +56,7 @@ public class LazyList<T> : IList<T>, IDisposable
 
     private void ensureEnumeratedCompletely()
     {
-        if (_list == null)
-            _list = new List<T>();
+        _list ??= [];
         if (_enumerator != null)
             while (true)
             {
@@ -151,8 +149,7 @@ public class LazyList<T> : IList<T>, IDisposable
     ///     The underlying collection is enumerated until the item is found, or fully if the item is not in it.</remarks>
     public int IndexOf(T item)
     {
-        if (_list == null)
-            _list = new List<T>();
+        _list ??= [];
         var pos = _list.IndexOf(item);
         if (pos != -1)
             return pos;

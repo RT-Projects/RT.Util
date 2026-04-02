@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Util.Controls;
@@ -246,7 +246,7 @@ public class LabelEx : Control, IButtonControl
     private string _bullet = " •\u2002";
     private static ColorConverter _colorConverter;
     private static Cursor _cursorHandCache;
-    private static Cursor _cursorHand
+    private static Cursor cursorHand
     {
         get
         {
@@ -262,9 +262,9 @@ public class LabelEx : Control, IButtonControl
             return _cursorHandCache;
         }
     }
-    private static Dictionary<Font, Dictionary<string, Size>> _measureCache = new Dictionary<Font, Dictionary<string, Size>>();
+    private static Dictionary<Font, Dictionary<string, Size>> _measureCache = [];
 
-    private Dictionary<int, Size> _cachedPreferredSizes = new Dictionary<int, Size>();
+    private Dictionary<int, Size> _cachedPreferredSizes = [];
     private List<renderingInfo> _cachedRendering;
     private Color _cachedRenderingColor;
     private int _cachedRenderingWidth;
@@ -273,19 +273,19 @@ public class LabelEx : Control, IButtonControl
     private IndentUnit _hangingIndentUnit = IndentUnit.Spaces;
     private linkLocationInfo _keyboardFocusOnLinkPrivate;
     private bool _lastHadFocus;
-    private List<locationInfo> _specialLocations = new List<locationInfo>();
+    private List<locationInfo> _specialLocations = [];
     private char _mnemonic;
     private bool _mouseIsDownOnLink;
     private linkLocationInfo _mouseOnLink;
     private double _paragraphSpacing = 0d;
-    private List<Control> _parentChain = new List<Control>();
+    private List<Control> _parentChain = [];
     private EggsNode _parsed;
     private bool _spaceIsDownOnLink;
     private bool _wordWrap = false;
-    private ToolTip _tooltip = new ToolTip { StripAmpersands = false, Active = true };
+    private ToolTip _tooltip = new() { StripAmpersands = false, Active = true };
     private string _tooltipText;
 
-    private linkLocationInfo _keyboardFocusOnLink
+    private linkLocationInfo keyboardFocusOnLink
     {
         get { return _keyboardFocusOnLinkPrivate; }
         set
@@ -295,19 +295,19 @@ public class LabelEx : Control, IButtonControl
 
             // The previous focused link loses focus
             if (LinkLostFocus != null && _keyboardFocusOnLinkPrivate != null)
-                LinkLostFocus(this, new LinkEventArgs(_keyboardFocusOnLink.LinkID, _keyboardFocusOnLink.Rectangles));
+                LinkLostFocus(this, new LinkEventArgs(keyboardFocusOnLink.LinkID, keyboardFocusOnLink.Rectangles));
 
             _keyboardFocusOnLinkPrivate = value;
             Invalidate();
 
             // The new link gains focus
             if (LinkGotFocus != null && _keyboardFocusOnLinkPrivate != null)
-                LinkGotFocus(this, new LinkEventArgs(_keyboardFocusOnLink.LinkID, _keyboardFocusOnLink.Rectangles));
+                LinkGotFocus(this, new LinkEventArgs(keyboardFocusOnLink.LinkID, keyboardFocusOnLink.Rectangles));
         }
     }
 
     // TextRenderer.MeasureText() requires a useless size to be specified in order to specify format flags
-    private static Size _dummySize = new Size(int.MaxValue, int.MaxValue);
+    private static Size _dummySize = new(int.MaxValue, int.MaxValue);
 
     private sealed class renderState
     {
@@ -317,7 +317,7 @@ public class LabelEx : Control, IButtonControl
         public IEnumerable<locationInfo> ActiveLocations { get; private set; }
         public bool Mnemonic { get; private set; }
 
-        public renderState(Font initialFont, Color initialColor) { Font = initialFont; Color = initialColor; BlockIndent = 0; ActiveLocations = Enumerable.Empty<locationInfo>(); Mnemonic = false; }
+        public renderState(Font initialFont, Color initialColor) { Font = initialFont; Color = initialColor; BlockIndent = 0; ActiveLocations = []; Mnemonic = false; }
         private renderState(Font font, Color color, int blockIndent, IEnumerable<locationInfo> activeLocations, bool mnemonic) { Font = font; Color = color; BlockIndent = blockIndent; ActiveLocations = activeLocations; Mnemonic = mnemonic; }
         public renderState ChangeFont(Font newFont) { return new renderState(newFont, Color, BlockIndent, ActiveLocations, Mnemonic); }
         public renderState ChangeColor(Color newColor) { return new renderState(Font, newColor, BlockIndent, ActiveLocations, Mnemonic); }
@@ -326,17 +326,16 @@ public class LabelEx : Control, IButtonControl
         public renderState AddActiveLocation(locationInfo location) { return new renderState(Font, Color, BlockIndent, location.Concat(ActiveLocations), Mnemonic); }
     }
 
-    private sealed class renderingInfo
+    private sealed class renderingInfo(string text, Rectangle location, renderState state)
     {
-        public string Text;
-        public Rectangle Rectangle;
-        public renderState State;
-        public renderingInfo(string text, Rectangle location, renderState state) { Text = text; Rectangle = location; State = state; }
+        public string Text = text;
+        public Rectangle Rectangle = location;
+        public renderState State = state;
     }
 
     private abstract class locationInfo
     {
-        public List<Rectangle> Rectangles = new List<Rectangle>();
+        public List<Rectangle> Rectangles = [];
     }
 
     private sealed class linkLocationInfo : locationInfo
@@ -383,7 +382,7 @@ public class LabelEx : Control, IButtonControl
     {
         // If a link has focus, trigger the LinkLostFocus event.
         // OnPaint will trigger the LinkGotFocus event as appropriate
-        _keyboardFocusOnLink = null;
+        keyboardFocusOnLink = null;
 
         _cachedPreferredSizes.Clear();
         _cachedRendering = null;
@@ -432,14 +431,14 @@ public class LabelEx : Control, IButtonControl
         // &F&ile       (mnemonic is 'F')
         // O&p&en    (mnemonic is 'P')
 
-        var tag = node as EggsTag;
-        if (tag == null)
+        if (node is not EggsTag tag)
             return;
         if (tag.Tag == '&')
         {
-            if (tag.Children.Count != 1 || !(tag.Children.First() is EggsText) || ((EggsText) tag.Children.First()).Text.Length != 1)
+            if (tag.Children.Count == 1 && tag.Children.First() is EggsText { Text: { Length: 1 } text })
+                _mnemonic = char.ToUpperInvariant(text[0]);
+            else
                 throw new InvalidOperationException("'&' mnemonic tag must not contain anything other than a single character.");
-            _mnemonic = char.ToUpperInvariant(((EggsText) tag.Children.First()).Text[0]);
         }
         else if (tag.Tag == '{')
         {
@@ -488,7 +487,7 @@ public class LabelEx : Control, IButtonControl
 
         if (_cachedRendering == null || _cachedRenderingWidth != ClientSize.Width || _cachedRenderingColor != initialColor)
         {
-            _cachedRendering = new List<renderingInfo>();
+            _cachedRendering = [];
             _cachedRenderingWidth = ClientSize.Width;
             _cachedRenderingColor = initialColor;
             _specialLocations.Clear();
@@ -496,11 +495,11 @@ public class LabelEx : Control, IButtonControl
 
             // If this control has focus and it has a link in it, focus the first link. (This triggers the LinkGotFocus event.)
             if (!_lastHadFocus)
-                _keyboardFocusOnLink = null;
-            else if (_keyboardFocusOnLink == null)
-                _keyboardFocusOnLink = _specialLocations.OfType<linkLocationInfo>().FirstOrDefault();
+                keyboardFocusOnLink = null;
+            else
+                keyboardFocusOnLink ??= _specialLocations.OfType<linkLocationInfo>().FirstOrDefault();
 
-            checkForLinksAndTooltips(PointToClient(Control.MousePosition));
+            checkForLinksAndTooltips(PointToClient(MousePosition));
         }
 
         foreach (var item in _cachedRendering)
@@ -516,29 +515,26 @@ public class LabelEx : Control, IButtonControl
                 font,
                 item.Rectangle.Location,
                 (_mouseIsDownOnLink && item.State.ActiveLocations.Contains(_mouseOnLink)) ||
-                (_spaceIsDownOnLink && item.State.ActiveLocations.Contains(_keyboardFocusOnLink))
+                (_spaceIsDownOnLink && item.State.ActiveLocations.Contains(keyboardFocusOnLink))
                     ? LinkActiveColor : item.State.Color,
                 TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
         }
 
-        if (_keyboardFocusOnLink != null)
+        if (keyboardFocusOnLink != null)
         {
-            if (!_specialLocations.Contains(_keyboardFocusOnLink))
+            if (!_specialLocations.Contains(keyboardFocusOnLink))
                 _keyboardFocusOnLinkPrivate = null;   // set the private one so that no event is triggered
             else
-                foreach (var rectangle in _keyboardFocusOnLink.Rectangles)
+                foreach (var rectangle in keyboardFocusOnLink.Rectangles)
                     ControlPaint.DrawFocusRectangle(e.Graphics, rectangle);
         }
     }
 
-    private Size measure(Font font, string text, Graphics g)
+    private static Size measure(Font font, string text, Graphics g)
     {
-        Dictionary<string, Size> dic;
-        Size result;
-
-        if (!_measureCache.TryGetValue(font, out dic))
-            _measureCache[font] = dic = new Dictionary<string, Size>();
-        if (!dic.TryGetValue(text, out result))
+        if (!_measureCache.TryGetValue(font, out var dic))
+            _measureCache[font] = dic = [];
+        if (!dic.TryGetValue(text, out var result))
             dic[text] = result = TextRenderer.MeasureText(g, text, font, _dummySize, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
         return result;
     }
@@ -625,8 +621,7 @@ public class LabelEx : Control, IButtonControl
                     case '[':
                         var bulletSize = measure(font, _bullet, g);
                         var advance = bulletSize.Width;
-                        if (renderings != null)
-                            renderings.Add(new renderingInfo(_bullet, new Rectangle(x, y, advance, bulletSize.Height), new renderState(font, state.Color)));
+                        renderings?.Add(new renderingInfo(_bullet, new Rectangle(x, y, advance, bulletSize.Height), new renderState(font, state.Color)));
                         x += advance;
                         return (state.ChangeBlockIndent(state.BlockIndent + advance), advance);
 
@@ -648,7 +643,7 @@ public class LabelEx : Control, IButtonControl
 
                     // COLOUR (e.g. <colour>=coloured text=, revert to default colour if no <colour> specified)
                     case '=':
-                        var color = parameter == null ? initialForeColor : (Color) (_colorConverter ?? (_colorConverter = new ColorConverter())).ConvertFromString(parameter);
+                        var color = parameter == null ? initialForeColor : (Color) (_colorConverter ??= new ColorConverter()).ConvertFromString(parameter);
                         return (state.ChangeColor(color), 0);
                 }
                 return (state, 0);
@@ -758,15 +753,14 @@ public class LabelEx : Control, IButtonControl
         else if (applicableLinks.Length == 1)
         {
             // One applicable link: activate it
-            _keyboardFocusOnLink = applicableLinks[0];
+            keyboardFocusOnLink = applicableLinks[0];
             Focus();
-            if (LinkActivated != null)
-                LinkActivated(this, new LinkEventArgs(applicableLinks[0].LinkID, applicableLinks[0].Rectangles));
+            LinkActivated?.Invoke(this, new LinkEventArgs(applicableLinks[0].LinkID, applicableLinks[0].Rectangles));
         }
         else
         {
             // More than one applicable link: cycle between between them without activating them (must press Enter or Space to activate them)
-            _keyboardFocusOnLink = _keyboardFocusOnLink.NullOr(kf => applicableLinks.SkipWhile(loc => loc != kf).Skip(1).FirstOrDefault()) ?? applicableLinks.FirstOrDefault();
+            keyboardFocusOnLink = keyboardFocusOnLink.NullOr(kf => applicableLinks.SkipWhile(loc => loc != kf).Skip(1).FirstOrDefault()) ?? applicableLinks.FirstOrDefault();
             Focus();
         }
         return true;
@@ -799,12 +793,12 @@ public class LabelEx : Control, IButtonControl
                 foreach (var rectangle in location.Rectangles)
                     if (rectangle.Contains(p))
                     {
-                        if (location is linkLocationInfo)
+                        if (location is linkLocationInfo lli)
                         {
                             if (_mouseOnLink != location)
                             {
-                                Cursor = _cursorHand;
-                                _mouseOnLink = (linkLocationInfo) location;
+                                Cursor = cursorHand;
+                                _mouseOnLink = lli;
                                 Invalidate();
                             }
                             anyLink = true;
@@ -857,7 +851,7 @@ public class LabelEx : Control, IButtonControl
         if (_mouseOnLink != null)
         {
             _mouseIsDownOnLink = true;
-            _keyboardFocusOnLink = _mouseOnLink;
+            keyboardFocusOnLink = _mouseOnLink;
             Focus();
             Invalidate();
         }
@@ -893,14 +887,14 @@ public class LabelEx : Control, IButtonControl
     protected override void OnGotFocus(EventArgs e)
     {
         _lastHadFocus = true;
-        if (_keyboardFocusOnLink == null)
+        if (keyboardFocusOnLink == null)
         {
             var links = _specialLocations.OfType<linkLocationInfo>();
-            _keyboardFocusOnLink = Control.ModifierKeys.HasFlag(Keys.Shift) ? links.LastOrDefault() : links.FirstOrDefault();
+            keyboardFocusOnLink = Control.ModifierKeys.HasFlag(Keys.Shift) ? links.LastOrDefault() : links.FirstOrDefault();
         }
 
         // Only call the base if this is not the late invocation from the paint event
-        if (!(e is PaintEventArgs))
+        if (e is not PaintEventArgs)
             base.OnGotFocus(e);
     }
 
@@ -911,7 +905,7 @@ public class LabelEx : Control, IButtonControl
         if (_formJustDeactivated)
             _formJustDeactivated = false;
         else
-            _keyboardFocusOnLink = null;
+            keyboardFocusOnLink = null;
         base.OnLostFocus(e);
     }
 
@@ -951,13 +945,11 @@ public class LabelEx : Control, IButtonControl
         var shift = keyData == (Keys.Tab | Keys.Shift);
         var links = _specialLocations.OfType<linkLocationInfo>();
 
-        _keyboardFocusOnLink = shift
-            ? links.TakeWhile(l => l != _keyboardFocusOnLink).LastOrDefault()
-            : links.SkipWhile(l => l != _keyboardFocusOnLink).Skip(1).FirstOrDefault();
+        keyboardFocusOnLink = shift
+            ? links.TakeWhile(l => l != keyboardFocusOnLink).LastOrDefault()
+            : links.SkipWhile(l => l != keyboardFocusOnLink).Skip(1).FirstOrDefault();
 
-        return _keyboardFocusOnLink == null
-            ? base.ProcessDialogKey(keyData)
-            : true;
+        return keyboardFocusOnLink != null || base.ProcessDialogKey(keyData);
     }
 
     /// <summary>Override; see base.</summary>
@@ -1027,20 +1019,18 @@ public class LabelEx : Control, IButtonControl
     /// <summary>Pretends as if the user pressed Enter. Has no effect if there is no link that has keyboard focus.</summary>
     public void PerformClick()
     {
-        if (_keyboardFocusOnLink != null && LinkActivated != null)
-            LinkActivated(this, new LinkEventArgs(_keyboardFocusOnLink.LinkID, _keyboardFocusOnLink.Rectangles));
+        if (keyboardFocusOnLink != null && LinkActivated != null)
+            LinkActivated(this, new LinkEventArgs(keyboardFocusOnLink.LinkID, keyboardFocusOnLink.Rectangles));
     }
 }
 
 /// <summary>Provides data for the <see cref="LabelEx.LinkActivated"/> event.</summary>
-public class LinkEventArgs : EventArgs
+public class LinkEventArgs(string linkId, IEnumerable<Rectangle> linkLocation) : EventArgs
 {
     /// <summary>Gets the user-specified Link ID associated with the activated link.</summary>
-    public string LinkID { get; private set; }
+    public string LinkID { get; private set; } = linkId;
     /// <summary>Gets the location of the link as a series of rectangles relative to the control’s client co-ordinates.</summary>
-    public Rectangle[] LinkLocation { get; private set; }
-    /// <summary>Constructor.</summary>
-    public LinkEventArgs(string linkId, IEnumerable<Rectangle> linkLocation) { LinkID = linkId; LinkLocation = linkLocation.ToArray(); }
+    public Rectangle[] LinkLocation { get; private set; } = linkLocation.ToArray();
 }
 
 /// <summary>

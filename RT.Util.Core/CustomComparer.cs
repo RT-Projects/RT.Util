@@ -32,24 +32,18 @@ namespace RT.Internal
     ///     Encapsulates an IComparer&lt;T&gt; that uses a comparison function provided as a delegate.</summary>
     /// <typeparam name="T">
     ///     The type of elements to be compared.</typeparam>
+    /// <param name="comparison">
+    ///     Provides the comparison function for this comparer.</param>
 #if EXPORT_UTIL
     public
 #endif
-    sealed class CustomComparer<T> : IComparer<T>
+    sealed class CustomComparer<T>(Comparison<T> comparison) : IComparer<T>
     {
-        private readonly Comparison<T> _comparison;
-
         /// <summary>
         ///     Compares two elements.</summary>
         /// <remarks>
         ///     This method implements <see cref="IComparer&lt;T&gt;.Compare(T,T)"/>.</remarks>
-        public int Compare(T x, T y) { return _comparison(x, y); }
-
-        /// <summary>
-        ///     Constructor.</summary>
-        /// <param name="comparison">
-        ///     Provides the comparison function for this comparer.</param>
-        public CustomComparer(Comparison<T> comparison) { _comparison = comparison; }
+        public int Compare(T x, T y) { return comparison(x, y); }
 
         /// <summary>
         ///     Creates and returns a CustomComparer which compares items by comparing the results of a selector function.</summary>
@@ -61,8 +55,7 @@ namespace RT.Internal
         public static CustomComparer<T> By<TBy>(Func<T, TBy> selector, IComparer<TBy> comparer = null)
         {
             if (selector == null) throw new ArgumentNullException(nameof(selector));
-            if (comparer == null)
-                comparer = Comparer<TBy>.Default;
+            comparer ??= Comparer<TBy>.Default;
             return new CustomComparer<T>((a, b) => comparer.Compare(selector(a), selector(b)));
         }
 
@@ -104,8 +97,7 @@ namespace RT.Internal
         public CustomComparer<T> ThenBy<TBy>(Func<T, TBy> selector, IComparer<TBy> comparer = null)
         {
             if (selector == null) throw new ArgumentNullException(nameof(selector));
-            if (comparer == null)
-                comparer = Comparer<TBy>.Default;
+            comparer ??= Comparer<TBy>.Default;
             return new CustomComparer<T>((a, b) =>
             {
                 int result = Compare(a, b);
@@ -227,11 +219,11 @@ namespace RT.Internal
             if (selector == null) throw new ArgumentNullException(nameof(selector));
             var default_ = EqualityComparer<TBy>.Default;
             var cmp = comparison == null
-                ? new Func<T, T, bool>((T a, T b) => default_.Equals(selector(a), selector(b)))
-                : new Func<T, T, bool>((T a, T b) => comparison(selector(a), selector(b)));
+                ? new Func<T, T, bool>((a, b) => default_.Equals(selector(a), selector(b)))
+                : new Func<T, T, bool>((a, b) => comparison(selector(a), selector(b)));
             var ghc = getHashCode == null
-                ? new Func<T, int>((T a) => default_.GetHashCode(selector(a)))
-                : new Func<T, int>((T a) => getHashCode(selector(a)));
+                ? new Func<T, int>(a => default_.GetHashCode(selector(a)))
+                : new Func<T, int>(a => getHashCode(selector(a)));
             return new CustomEqualityComparer<T>(cmp, ghc);
         }
 

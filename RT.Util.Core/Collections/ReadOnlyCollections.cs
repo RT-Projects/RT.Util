@@ -64,23 +64,14 @@ namespace RT.Util.Collections
     ///     Wraps an <see cref="IDictionary&lt;TKey,TValue&gt;"/> to allow reading values but prevent setting/removing them.</summary>
     [DebuggerDisplay("Count = {Count}")]
     [DebuggerTypeProxy(typeof(ReadOnlyDictionary<,>.DebugView))]
-    public sealed class ReadOnlyDictionary<TKey, TValue> : IDictionary<TKey, TValue>
+    public sealed class ReadOnlyDictionary<TKey, TValue>(IDictionary<TKey, TValue> dict) : IDictionary<TKey, TValue>
     {
-        private IDictionary<TKey, TValue> _dict;
+        private IDictionary<TKey, TValue> _dict = dict;
         private ReadOnlyCollection<TKey> _keys;
         private ReadOnlyCollection<TValue> _values;
 
-        /// <summary>Creates a new read-only wrapper for the specified <see cref="IDictionary&lt;TKey,TValue&gt;"/>.</summary>
-        public ReadOnlyDictionary(IDictionary<TKey, TValue> dict)
-        {
-            _dict = dict;
-        }
-
         /// <summary>Returns true if <paramref name="dict"/> is the same dictionary object as the one this class wraps.</summary>
-        public bool IsWrapperFor(IDictionary<TKey, TValue> dict)
-        {
-            return object.ReferenceEquals(dict, _dict);
-        }
+        public bool IsWrapperFor(IDictionary<TKey, TValue> dict) => ReferenceEquals(dict, _dict);
 
         /// <summary>Not supported on a ReadOnlyDictionary.</summary>
         public void Add(TKey key, TValue value)
@@ -99,8 +90,7 @@ namespace RT.Util.Collections
         {
             get
             {
-                if (_keys == null)
-                    _keys = new ReadOnlyCollection<TKey>(_dict.Keys);
+                _keys ??= new ReadOnlyCollection<TKey>(_dict.Keys);
                 return _keys;
             }
         }
@@ -122,8 +112,7 @@ namespace RT.Util.Collections
         {
             get
             {
-                if (_values == null)
-                    _values = new ReadOnlyCollection<TValue>(_dict.Values);
+                _values ??= new ReadOnlyCollection<TValue>(_dict.Values);
                 return _values;
             }
         }
@@ -195,17 +184,10 @@ namespace RT.Util.Collections
             return _dict.GetEnumerator();
         }
 
-        internal sealed class DebugView
+        internal sealed class DebugView(ReadOnlyDictionary<TKey, TValue> dict)
         {
-            private ReadOnlyDictionary<TKey, TValue> _dict;
-
-            public DebugView(ReadOnlyDictionary<TKey, TValue> dict)
-            {
-                _dict = dict;
-            }
-
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-            public KeyValuePair<TKey, TValue>[] Items { get { return _dict.ToArray(); } }
+            public KeyValuePair<TKey, TValue>[] Items => dict.ToArray();
         }
     }
 #endif
@@ -213,87 +195,42 @@ namespace RT.Util.Collections
     /// <summary>Wraps an <see cref="ICollection&lt;T&gt;"/> to allow reading values but prevent setting/removing them.</summary>
     [DebuggerDisplay("Count = {Count}")]
     [DebuggerTypeProxy(typeof(ReadOnlyCollection<>.DebugView))]
-    public sealed class ReadOnlyCollection<T> : ICollection<T>
+    public sealed class ReadOnlyCollection<T>(ICollection<T> collection) : ICollection<T>
     {
-        private ICollection<T> _coll;
-
-        /// <summary>Creates a new read-only wrapper for the specified <see cref="ICollection&lt;T&gt;"/>.</summary>
-        public ReadOnlyCollection(ICollection<T> coll)
-        {
-            _coll = coll;
-        }
-
-        /// <summary>Returns true if <paramref name="coll"/> is the same collection object as the one this class wraps.</summary>
-        public bool IsWrapperFor(ICollection<T> coll)
-        {
-            return object.ReferenceEquals(coll, _coll);
-        }
+        /// <summary>Returns <c>true</c> if <paramref name="coll"/> is the same collection object as the one this class wraps.</summary>
+        public bool IsWrapperFor(ICollection<T> coll) => ReferenceEquals(coll, collection);
 
         /// <summary>Not supported on a ReadOnlyCollection.</summary>
-        public void Add(T item)
-        {
-            throw new InvalidOperationException("Cannot Add to a read-only collection");
-        }
+        public void Add(T item) => throw new InvalidOperationException("Cannot Add to a read-only collection");
 
         /// <summary>Not supported on a ReadOnlyCollection.</summary>
-        public void Clear()
-        {
-            throw new InvalidOperationException("Cannot Clear a read-only collection");
-        }
+        public void Clear() => throw new InvalidOperationException("Cannot Clear a read-only collection");
 
         /// <summary>Returns true if the specified item exists in this collection, false otherwise.</summary>
-        public bool Contains(T item)
-        {
-            return _coll.Contains(item);
-        }
+        public bool Contains(T item) => collection.Contains(item);
 
         /// <summary>Copies the values stored in this collection into the specified dictionary.</summary>
-        public void CopyTo(T[] array, int arrayIndex)
-        {
-            _coll.CopyTo(array, arrayIndex);
-        }
+        public void CopyTo(T[] array, int arrayIndex) => collection.CopyTo(array, arrayIndex);
 
         /// <summary>Gets the number of values stored in this collection.</summary>
-        public int Count
-        {
-            get { return _coll.Count; }
-        }
+        public int Count => collection.Count;
 
         /// <summary>Returns true, as this is a read-only collection.</summary>
-        public bool IsReadOnly
-        {
-            get { return true; }
-        }
+        public bool IsReadOnly => true;
 
         /// <summary>Not supported on a ReadOnlyCollection.</summary>
-        public bool Remove(T item)
-        {
-            throw new InvalidOperationException("Cannot Remove from a read-only collection");
-        }
+        public bool Remove(T item) => throw new InvalidOperationException("Cannot Remove from a read-only collection");
 
         /// <summary>Gets an enumerator for the values stored in this collection.</summary>
-        public IEnumerator<T> GetEnumerator()
-        {
-            return _coll.GetEnumerator();
-        }
+        public IEnumerator<T> GetEnumerator() => collection.GetEnumerator();
 
         /// <summary>Gets an enumerator for the values stored in this collection.</summary>
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => collection.GetEnumerator();
+
+        internal sealed class DebugView(ReadOnlyCollection<T> collection)
         {
-            return _coll.GetEnumerator();
-        }
-
-        internal sealed class DebugView
-        {
-            private ReadOnlyCollection<T> _collection;
-
-            public DebugView(ReadOnlyCollection<T> collection)
-            {
-                _collection = collection;
-            }
-
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-            public T[] Items { get { return _collection.ToArray(); } }
+            public T[] Items => collection.ToArray();
         }
     }
 }

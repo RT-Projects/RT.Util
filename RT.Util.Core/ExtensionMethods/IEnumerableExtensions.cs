@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 #if NET7_0_OR_GREATER
 using System.Numerics;
 #endif
@@ -136,7 +136,7 @@ static class IEnumerableExtensions
                 if (splitWhere(item))
                 {
                     yield return items;
-                    items = new List<T>();
+                    items = [];
                 }
                 else
                     items.Add(item);
@@ -1388,7 +1388,7 @@ static class IEnumerableExtensions
                 else if (keyComparer != null ? !keyComparer.Equals(prevKey, key) : !Equals(prevKey, key))
                 {
                     yield return new ConsecutiveGroup<TItem, TKey>(index - currentList.Count, currentList, prevKey);
-                    currentList = new List<TItem>();
+                    currentList = [];
                 }
                 currentList.Add(elem);
                 prevKey = key;

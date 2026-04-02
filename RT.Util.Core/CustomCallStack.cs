@@ -112,34 +112,28 @@ abstract class WorkStep<T>
 
     private WorkStep() { }
 
-    /// <summary>Indicates that the current delegate has finished its work and returned a result.</summary>
-    public sealed class Return : WorkStep<T>
+    /// <summary>
+    ///     Indicates that the current delegate has finished its work and returned a result.</summary>
+    /// <param name="result">
+    ///     Specifies the result returned by the computation.</param>
+    /// <remarks>
+    ///     For convenience, the type <see cref="WorkStep{T}"/> declares an implicit operator equivalent to this constructor.</remarks>
+    public sealed class Return(T result) : WorkStep<T>
     {
         /// <summary>The result returned by the computation.</summary>
-        public T Result { get; private set; }
-        /// <summary>
-        ///     Constructs a <see cref="Return"/> value.</summary>
-        /// <param name="result">
-        ///     Specifies the result returned by the computation.</param>
-        /// <remarks>
-        ///     For convenience, the type <see cref="WorkStep{T}"/> declares an implicit operator equivalent to this
-        ///     constructor.</remarks>
-        public Return(T result) { Result = result; }
+        public T Result { get; private set; } = result;
     }
 
-    /// <summary>Indicates that the current delegate requires another value to be computed before it can continue.</summary>
-    public sealed class Call : WorkStep<T>
+    /// <summary>
+    ///     Indicates that the current delegate requires another value to be computed before it can continue.</summary>
+    /// <param name="work">
+    ///     Specifies the additional work required.</param>
+    /// <remarks>
+    ///     For convenience, the type <see cref="WorkStep{T}"/> declares an implicit operator equivalent to this constructor.</remarks>
+    public sealed class Call(WorkNode<T> work) : WorkStep<T>
     {
         /// <summary>Specifies the additional work required.</summary>
-        public WorkNode<T> Callee { get; private set; }
-        /// <summary>
-        ///     Constructs a <see cref="Call"/> value.</summary>
-        /// <param name="work">
-        ///     Specifies the additional work required.</param>
-        /// <remarks>
-        ///     For convenience, the type <see cref="WorkStep{T}"/> declares an implicit operator equivalent to this
-        ///     constructor.</remarks>
-        public Call(WorkNode<T> work) { Callee = work; }
+        public WorkNode<T> Callee { get; private set; } = work;
     }
 }
 

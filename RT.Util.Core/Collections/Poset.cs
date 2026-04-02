@@ -1,4 +1,4 @@
-using RT.Util;
+﻿using RT.Util;
 using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
 
@@ -33,9 +33,9 @@ public sealed class PosetNode<T> : IPartialComparable<PosetNode<T>>, IPartialCom
 {
     private List<T> _elements;
     /// <summary>Stores a set of all nodes which are just-larger than this one. DO NOT CHANGE!</summary>
-    internal HashSet<PosetNode<T>> _largers = new HashSet<PosetNode<T>>();
+    internal HashSet<PosetNode<T>> _largers = [];
     /// <summary>Stores a set of all nodes which are just-smaller than this one. DO NOT CHANGE!</summary>
-    internal HashSet<PosetNode<T>> _smallers = new HashSet<PosetNode<T>>();
+    internal HashSet<PosetNode<T>> _smallers = [];
 
     /// <summary>Gets a read-only collection of all nodes which are just-larger than this one.</summary>
     public ReadOnlyCollection<PosetNode<T>> Largers { get { return _largers.AsReadOnly(ref _largersRO); } }
@@ -54,8 +54,7 @@ public sealed class PosetNode<T> : IPartialComparable<PosetNode<T>>, IPartialCom
     ///     Any additional elements to add to the node.</param>
     public PosetNode(T element, params T[] elements)
     {
-        _elements = new List<T>();
-        _elements.Add(element);
+        _elements = [element];
         foreach (var el in elements)
             AddElement(el);
     }
@@ -108,8 +107,8 @@ public sealed class PosetNode<T> : IPartialComparable<PosetNode<T>>, IPartialCom
 ///     The type of the elements to be stored. Must implement <see cref="IPartialComparable&lt;T&gt;"/></typeparam>
 public sealed class Poset<T> where T : IPartialComparable<T>
 {
-    private HashSet<PosetNode<T>> _minimals = new HashSet<PosetNode<T>>();
-    private HashSet<PosetNode<T>> _maximals = new HashSet<PosetNode<T>>();
+    private HashSet<PosetNode<T>> _minimals = [];
+    private HashSet<PosetNode<T>> _maximals = [];
 
     /// <summary>Gets the set of all minimal elements in the poset.</summary>
     public ReadOnlyCollection<PosetNode<T>> Minimals { get { return _minimals.AsReadOnly(ref _minimalsRO); } }
@@ -138,7 +137,7 @@ public sealed class Poset<T> where T : IPartialComparable<T>
         add(false, node, _maximals, null);
     }
 
-    private void add(bool upwards, PosetNode<T> toadd, HashSet<PosetNode<T>> links, PosetNode<T> linkfrom)
+    private static void add(bool upwards, PosetNode<T> toadd, HashSet<PosetNode<T>> links, PosetNode<T> linkfrom)
     {
         bool any = false;
         List<PosetNode<T>> links_add = null;
@@ -160,9 +159,9 @@ public sealed class Poset<T> where T : IPartialComparable<T>
             else if ((upwards && partcmp == PartialComparisonResult.Less) || (!upwards && partcmp == PartialComparisonResult.Greater))
             {
                 any = true;
-                if (links_add == null) links_add = new List<PosetNode<T>>();
+                links_add ??= [];
                 links_add.Add(toadd);
-                if (links_del == null) links_del = new List<PosetNode<T>>();
+                links_del ??= [];
                 links_del.Add(linkto);
                 if (linkfrom != null)
                 {

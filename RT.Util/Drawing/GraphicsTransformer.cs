@@ -1,4 +1,4 @@
-using System.Drawing.Drawing2D;
+﻿using System.Drawing.Drawing2D;
 
 namespace RT.Util.Drawing;
 
@@ -22,7 +22,7 @@ namespace RT.Util.Drawing;
 public class GraphicsTransformer : IDisposable
 {
     private Graphics _graphics;
-    private static Dictionary<Graphics, Stack<Matrix>> _transforms = new Dictionary<Graphics, Stack<Matrix>>();
+    private static Dictionary<Graphics, Stack<Matrix>> _transforms = [];
 
     /// <summary>
     ///     Instantiates a new <see cref="GraphicsTransformer"/> instance. Use this in a “using” statement.</summary>
@@ -31,12 +31,12 @@ public class GraphicsTransformer : IDisposable
     public GraphicsTransformer(Graphics g)
     {
         _graphics = g;
-        if (!_transforms.ContainsKey(g))
+        if (!_transforms.TryGetValue(g, out var stack))
         {
-            _transforms[g] = new Stack<Matrix>();
-            _transforms[g].Push(g.Transform.Clone());
+            stack = _transforms[g] = new Stack<Matrix>();
+            stack.Push(g.Transform.Clone());
         }
-        _transforms[g].Push(_transforms[g].Peek().Clone());
+        stack.Push(stack.Peek().Clone());
     }
 
     /// <summary>Translates the graphics by the specified amount.</summary>
@@ -91,5 +91,6 @@ public class GraphicsTransformer : IDisposable
         _graphics.Transform = _transforms[_graphics].Peek();
         if (_transforms[_graphics].Count == 1)
             _transforms.Remove(_graphics);
+        GC.SuppressFinalize(this);
     }
 }

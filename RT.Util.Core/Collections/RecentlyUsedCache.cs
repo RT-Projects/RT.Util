@@ -1,17 +1,22 @@
-namespace RT.Util.Collections;
+﻿namespace RT.Util.Collections;
 
 /// <summary>
 ///     Implements a key-value store which remembers which keys were used more recently than others, and automatically trims
 ///     the older entries once a threshold is reached. Lookups are O(1) and are comparable in speed to a Dictionary`2. So are
 ///     additions, except when a trim is triggered.</summary>
-class RecentlyUsedCache<TKey, TValue>
+/// <param name="trimAt">
+///     Whenever the cache has this many entries, a trim will be triggered.</param>
+/// <param name="trimTo">
+///     The minimum number of most recently used entries to remain in the cache after trimming. The actual number of entries
+///     will be somewhere between <paramref name="trimTo"/> and 2 * <paramref name="trimTo"/>.</param>
+class RecentlyUsedCache<TKey, TValue>(int trimAt = 15000, int trimTo = 1000)
 {
-    private struct Entry
+    private struct entry
     {
         public long LastUsedAt { get; private set; }
         public TValue Value { get; private set; }
 
-        public Entry(long lastUsedAt, TValue value)
+        public entry(long lastUsedAt, TValue value)
             : this()
         {
             LastUsedAt = lastUsedAt;
@@ -20,21 +25,7 @@ class RecentlyUsedCache<TKey, TValue>
     }
 
     private long _current, _oldest;
-    private Dictionary<TKey, Entry> _cache = new Dictionary<TKey, Entry>();
-    private int _trimAt, _trimTo;
-
-    /// <summary>
-    ///     Constructor.</summary>
-    /// <param name="trimAt">
-    ///     Whenever the cache has this many entries, a trim will be triggered.</param>
-    /// <param name="trimTo">
-    ///     The minimum number of most recently used entries to remain in the cache after trimming. The actual number of
-    ///     entries will be somewhere between <paramref name="trimTo"/> and 2 * <paramref name="trimTo"/>.</param>
-    public RecentlyUsedCache(int trimAt = 15000, int trimTo = 1000)
-    {
-        _trimAt = trimAt;
-        _trimTo = trimTo;
-    }
+    private Dictionary<TKey, entry> _cache = [];
 
     /// <summary>
     ///     Gets a value associated with the specified key, and records it as recently used.</summary>
@@ -47,17 +38,16 @@ class RecentlyUsedCache<TKey, TValue>
     ///     True if the key was found, false otherwise.</returns>
     public bool Retrieve(TKey key, out TValue value)
     {
-        Entry entry;
-        if (_cache.TryGetValue(key, out entry))
+        if (_cache.TryGetValue(key, out var entry))
         {
             value = entry.Value;
             _current++;
-            _cache[key] = new Entry(_current, value);
+            _cache[key] = new entry(_current, value);
             return true;
         }
         else
         {
-            value = default(TValue);
+            value = default;
             return false;
         }
     }
@@ -69,8 +59,8 @@ class RecentlyUsedCache<TKey, TValue>
     public void Store(TKey key, TValue value)
     {
         _current++;
-        _cache[key] = new Entry(_current, value);
-        if (_cache.Count > _trimAt)
+        _cache[key] = new entry(_current, value);
+        if (_cache.Count > trimAt)
             trim();
     }
 
@@ -78,9 +68,9 @@ class RecentlyUsedCache<TKey, TValue>
     {
         long min = _oldest;
         long max = _current;
-        long thresh = (long) ((min + max) * ((_trimAt - 2 * _trimTo) / (double) _trimAt)); // trim a lot more the first time round
+        long thresh = (long) ((min + max) * ((trimAt - 2 * trimTo) / (double) trimAt)); // trim a lot more the first time round
         var toRemove = new List<TKey>();
-        while (_cache.Count > _trimTo * 2)
+        while (_cache.Count > trimTo * 2)
         {
             // See how many this would preserve
             long preserved = 0;
@@ -89,12 +79,12 @@ class RecentlyUsedCache<TKey, TValue>
                 if (val.LastUsedAt >= thresh)
                 {
                     preserved++;
-                    if (preserved >= _trimTo)
+                    if (preserved >= trimTo)
                         break; // we'll definitely not be removing too much
                 }
             }
             // Remove if the threshold is acceptable
-            if (preserved >= _trimTo)
+            if (preserved >= trimTo)
             {
                 toRemove.Clear();
                 _oldest = long.MaxValue;

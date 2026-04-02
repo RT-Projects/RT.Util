@@ -122,18 +122,15 @@ static class DateTimeExtensions
     /// <param name="precision">Which date/time components are to be included. The values are truncated, not rounded.</param>
     /// <param name="format">One of the several pre-defined formats to use.</param>
     /// <param name="includeTimezone">Specifies whether a suffix indicating date/time kind (local/utc/unspecified) and, for local times, a UTC offset, is appended.</param>
-    public static string ToIsoString(this DateTime datetime, IsoDatePrecision precision = IsoDatePrecision.Seconds, IsoDateFormat format = IsoDateFormat.HumanReadable, bool includeTimezone = false)
+    public static string ToIsoString(this DateTime datetime, IsoDatePrecision precision = IsoDatePrecision.Seconds, IsoDateFormat format = IsoDateFormat.HumanReadable, bool includeTimezone = false) => format switch
     {
-        switch (format)
-        {
-            case IsoDateFormat.HumanReadable: return datetime.ToIsoStringCustom(precision, charInDate: '-', charInTime: ':', charBetween: ' ', includeTimezone: includeTimezone);
-            case IsoDateFormat.Compact: return datetime.ToIsoStringCustom(precision, charInDate: null, charInTime: null, charBetween: 'T', includeTimezone: includeTimezone);
-            case IsoDateFormat.CompactReadable: return datetime.ToIsoStringCustom(precision, charInDate: null, charInTime: null, charBetween: '-', includeTimezone: includeTimezone);
-            case IsoDateFormat.FilenameReadable: return datetime.ToIsoStringCustom(precision, charInDate: '.', charInTime: '.', charBetween: '-', includeTimezone: includeTimezone);
-            case IsoDateFormat.Iso8601: return datetime.ToIsoStringCustom(precision, charInDate: '-', charInTime: ':', charBetween: 'T', includeTimezone: includeTimezone);
-            default: throw new Exception("usbwdg");
-        }
-    }
+        IsoDateFormat.HumanReadable => datetime.ToIsoStringCustom(precision, charInDate: '-', charInTime: ':', charBetween: ' ', includeTimezone: includeTimezone),
+        IsoDateFormat.Compact => datetime.ToIsoStringCustom(precision, charInDate: null, charInTime: null, charBetween: 'T', includeTimezone: includeTimezone),
+        IsoDateFormat.CompactReadable => datetime.ToIsoStringCustom(precision, charInDate: null, charInTime: null, charBetween: '-', includeTimezone: includeTimezone),
+        IsoDateFormat.FilenameReadable => datetime.ToIsoStringCustom(precision, charInDate: '.', charInTime: '.', charBetween: '-', includeTimezone: includeTimezone),
+        IsoDateFormat.Iso8601 => datetime.ToIsoStringCustom(precision, charInDate: '-', charInTime: ':', charBetween: 'T', includeTimezone: includeTimezone),
+        _ => throw new Exception("usbwdg"),
+    };
 
     /// <summary>
     /// Returns a string representation of the date/time in an ISO-8601-like format. The function will
@@ -182,26 +179,10 @@ static class DateTimeExtensions
     }
 
     private static Regex _cachedIsoRegexBasic;
-    private static Regex isoRegexBasic
-    {
-        get
-        {
-            if (_cachedIsoRegexBasic == null)
-                _cachedIsoRegexBasic = new Regex(@"^(?<yr>\d\d\d\d)(?<mo>\d\d)(?<da>\d\d)([T-](?<hr>\d\d)((?<mi>\d\d)((?<se>\d\d))?)?(?<frac>\.\d{1,7})?)?((?<tzz>Z)|(?<tzs>[+-])(?<tzh>\d\d)((?<tzm>\d\d))?)?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled);
-            return _cachedIsoRegexBasic;
-        }
-    }
+    private static Regex isoRegexBasic => _cachedIsoRegexBasic ??= new Regex(@"^(?<yr>\d\d\d\d)(?<mo>\d\d)(?<da>\d\d)([T-](?<hr>\d\d)((?<mi>\d\d)((?<se>\d\d))?)?(?<frac>\.\d{1,7})?)?((?<tzz>Z)|(?<tzs>[+-])(?<tzh>\d\d)((?<tzm>\d\d))?)?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled);
 
     private static Regex _cachedIsoRegexExtended;
-    private static Regex isoRegexExtended
-    {
-        get
-        {
-            if (_cachedIsoRegexExtended == null)
-                _cachedIsoRegexExtended = new Regex(@"^(?<yr>\d\d\d\d)(-(?<mo>\d\d)(-(?<da>\d\d)( (?<hr>\d\d)(:(?<mi>\d\d)(:(?<se>\d\d))?)?(?<frac>\.\d{1,7})?)?)?)?((?<tzz>Z)|(?<tzs>[+-])(?<tzh>\d\d)(:(?<tzm>\d\d))?)?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled);
-            return _cachedIsoRegexExtended;
-        }
-    }
+    private static Regex isoRegexExtended => _cachedIsoRegexExtended ??= new Regex(@"^(?<yr>\d\d\d\d)(-(?<mo>\d\d)(-(?<da>\d\d)( (?<hr>\d\d)(:(?<mi>\d\d)(:(?<se>\d\d))?)?(?<frac>\.\d{1,7})?)?)?)?((?<tzz>Z)|(?<tzs>[+-])(?<tzh>\d\d)(:(?<tzm>\d\d))?)?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled);
 
     /// <summary>
     /// <para>Attempts to parse the specified string as an ISO-formatted DateTime. The formats supported are guided by ISO-8601, but do not match
@@ -290,13 +271,7 @@ static class DateTimeExtensions
     /// Parse the specified string as an ISO-formatted DateTime. Returns null if the string is null or cannot be parsed.
     /// See <see cref="TryParseIso"/> for more info.
     /// </summary>
-    public static DateTime? ParseIsoNullable(string str)
-    {
-        DateTime result;
-        if (str == null || !TryParseIso(str, out result))
-            return null;
-        return result;
-    }
+    public static DateTime? ParseIsoNullable(string str) => str != null && TryParseIso(str, out var result) ? result : null;
 
     /// <summary>Returns a copy of this DateTime, truncated to whole milliseconds.</summary>
     public static DateTime TruncatedToMilliseconds(this DateTime datetime)

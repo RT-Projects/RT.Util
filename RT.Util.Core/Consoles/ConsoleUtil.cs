@@ -309,7 +309,7 @@ public static class ConsoleUtil
     ///     defaults to the current stack trace.</param>
     public static void WriteStackTrace(IEnumerable<string> stackTraceLines = null)
     {
-        stackTraceLines ??= Environment.StackTrace.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).Skip(3);
+        stackTraceLines ??= Environment.StackTrace.Split([Environment.NewLine], StringSplitOptions.RemoveEmptyEntries).Skip(3);
         foreach (var traceLine in stackTraceLines)
         {
             var m = Regex.Match(traceLine, @"^\s*at ([\w\.]+\.)([\w`<>]+)\.([\w\[\],<>]+)(\(.*\))( in (.:\\.*\\)([^\\]+\.cs):line (\d+))?\s*$");

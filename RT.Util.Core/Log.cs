@@ -28,7 +28,7 @@ public abstract class LoggerBase
     ///     printed. Defaults to level 1 for all messages except debug, which defaults to 0.</summary>
     /// <remarks>
     ///     Applications can print a message with a verbosity level of 0 - such messages cannot be disabled.</remarks>
-    public Dictionary<LogType, uint> VerbosityLimit = new Dictionary<LogType, uint>();
+    public Dictionary<LogType, uint> VerbosityLimit = [];
 
     /// <summary>
     ///     Holds a format string for printing the date/time at which a log entry was added. Defaults to a full ISO-formatted
@@ -60,17 +60,14 @@ public abstract class LoggerBase
     }
 
     /// <summary>Specifies a short string describing each log type (INFO, WARN, ERROR, or DEBUG).</summary>
-    public string GetMessageTypeString(LogType type)
+    public static string GetMessageTypeString(LogType type) => type switch
     {
-        switch (type)
-        {
-            case LogType.Info: return "INFO";
-            case LogType.Warning: return "WARN";
-            case LogType.Error: return "ERROR";
-            case LogType.Debug: return "DEBUG";
-        }
-        return null;
-    }
+        LogType.Info => "INFO",
+        LogType.Warning => "WARN",
+        LogType.Error => "ERROR",
+        LogType.Debug => "DEBUG",
+        _ => null,
+    };
 
     /// <summary>
     ///     Takes a string which encodes verbosity limit configuration, parses it and sets the limits accordingly. On failure
@@ -224,7 +221,7 @@ public abstract class LoggerBase
 public sealed class NullLogger : LoggerBase
 {
     /// <summary>Provides a preallocated instance of <see cref="NullLogger"/>.</summary>
-    public static NullLogger Instance = new NullLogger();
+    public static readonly NullLogger Instance = new();
 
     /// <summary>Does nothing.</summary>
     public override void Log(uint verbosity, LogType type, string message) { }
@@ -256,30 +253,25 @@ public sealed class ConsoleLogger : LoggerBase
     public bool InterpretMessagesAsEggsML = false;
 
     /// <summary>Gets a text color for each of the possible message types.</summary>
-    public ConsoleColor GetMessageTypeColor(LogType type)
+    public static ConsoleColor GetMessageTypeColor(LogType type) => type switch
     {
-        switch (type)
-        {
-            case LogType.Info: return ConsoleColor.White;
-            case LogType.Warning: return ConsoleColor.Yellow;
-            case LogType.Error: return ConsoleColor.Red;
-            case LogType.Debug: return ConsoleColor.Green;
-            default: return ConsoleColor.Gray;
-        }
-    }
+        LogType.Info => ConsoleColor.White,
+        LogType.Warning => ConsoleColor.Yellow,
+        LogType.Error => ConsoleColor.Red,
+        LogType.Debug => ConsoleColor.Green,
+        _ => ConsoleColor.Gray,
+    };
 
     /// <summary>Logs a message to the console.</summary>
     public override void Log(uint verbosity, LogType type, string message)
     {
-        if (message == null)
-            message = "<null>";
+        message ??= "<null>";
         lock (this)
         {
             if (VerbosityLimit[type] < verbosity)
                 return;
 
-            string fmtInfo, indent;
-            GetFormattedStrings(out fmtInfo, out indent, verbosity, type);
+            GetFormattedStrings(out var fmtInfo, out var indent, verbosity, type);
 
             var prevCol = Console.ForegroundColor;
             var col = GetMessageTypeColor(type);
@@ -354,8 +346,7 @@ public sealed class StreamLogger : LoggerBase
         set
         {
             _underlyingStream = value;
-            _streamWriter = new StreamWriter(_underlyingStream);
-            _streamWriter.AutoFlush = true;
+            _streamWriter = new StreamWriter(_underlyingStream) { AutoFlush = true };
         }
     }
 
@@ -370,15 +361,13 @@ public sealed class StreamLogger : LoggerBase
     /// <summary>Logs a message to the underlying stream.</summary>
     public override void Log(uint verbosity, LogType type, string message)
     {
-        if (message == null)
-            message = "<null>";
+        message ??= "<null>";
         lock (this)
         {
             if (VerbosityLimit[type] < verbosity || _streamWriter == null)
                 return;
 
-            string fmtInfo, indent;
-            GetFormattedStrings(out fmtInfo, out indent, verbosity, type);
+            GetFormattedStrings(out var fmtInfo, out _, verbosity, type);
             _streamWriter.Write(fmtInfo);
             _streamWriter.WriteLine(message);
         }
@@ -465,7 +454,7 @@ public sealed class FileAppendLogger(string filename, bool interpolateDate, Time
 public class MulticastLogger : LoggerBase
 {
     /// <summary>Add or remove the underlying loggers here. Every logger in this dictionary will be logged to.</summary>
-    public readonly Dictionary<string, LoggerBase> Loggers = new Dictionary<string, LoggerBase>();
+    public readonly Dictionary<string, LoggerBase> Loggers = [];
 
     /// <summary>
     ///     Initializes a <see cref="MulticastLogger"/> with initially no loggers configured. Use <see cref="Loggers"/> to add

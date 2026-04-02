@@ -101,40 +101,29 @@ static class ILReader
     }
 }
 
-/// <summary>Describes an IL instruction in a method.</summary>
+/// <summary>
+///     Describes an IL instruction in a method.</summary>
+/// <param name="startOffset">
+///     The byte offset at which this instruction starts.</param>
+/// <param name="opCode">
+///     The opcode of the instruction.</param>
+/// <param name="operand">
+///     The operand.</param>
 #if EXPORT_UTIL
 public
 #endif
-sealed class Instruction
+sealed class Instruction(int startOffset, OpCode opCode, object operand)
 {
     /// <summary>The byte offset at which this instruction starts.</summary>
-    public int StartOffset { get; private set; }
+    public int StartOffset { get; private set; } = startOffset;
     /// <summary>The opcode of the instruction.</summary>
-    public OpCode OpCode { get; private set; }
+    public OpCode OpCode { get; private set; } = opCode;
     /// <summary>
     ///     The operand. Depending on the <see cref="OpCode"/>, this may be a <see cref="FieldInfo"/>, <see
     ///     cref="MethodBase"/>, <see cref="Type"/>, byte, short, int, long, string, float, double, or null. In the case of
     ///     the switch instruction, it is an int[].</summary>
-    public object Operand { get; private set; }
-
-    /// <summary>
-    ///     Constructs an instance representing an IL instruction.</summary>
-    /// <param name="startOffset">
-    ///     The byte offset at which this instruction starts.</param>
-    /// <param name="opCode">
-    ///     The opcode of the instruction.</param>
-    /// <param name="operand">
-    ///     The operand.</param>
-    public Instruction(int startOffset, OpCode opCode, object operand)
-    {
-        StartOffset = startOffset;
-        OpCode = opCode;
-        Operand = operand;
-    }
+    public object Operand { get; private set; } = operand;
 
     /// <summary>Returns a string representation of this object.</summary>
-    public override string ToString()
-    {
-        return OpCode.ToString() + (Operand == null ? string.Empty : " " + Operand.ToString());
-    }
+    public override string ToString() => OpCode.ToString() + (Operand == null ? string.Empty : " " + Operand.ToString());
 }

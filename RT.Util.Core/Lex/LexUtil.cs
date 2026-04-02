@@ -85,11 +85,9 @@ public static class LexUtil
             {
                 reader.Consume(1);
                 char escape = reader.ConsumeChar();
-                char replacement;
-                Func<LexReader, string> replacementFunc;
-                if (basicEscapes.TryGetValue(escape, out replacement))
+                if (basicEscapes.TryGetValue(escape, out var replacement))
                     builder.Append(replacement);
-                else if (advancedEscapes.TryGetValue(escape, out replacementFunc))
+                else if (advancedEscapes.TryGetValue(escape, out var replacementFunc))
                     builder.Append(replacementFunc(reader));
                 else
                     throw new LexException(reader.GetPosition(-1), @"Unrecognized escape sequence: ""\{0}"".".Fmt(escape));
@@ -124,48 +122,28 @@ public static class LexUtil
     }
 
     private static IDictionary<char, char> _csharpStringEscapesBasic;
-    public static IDictionary<char, char> CsharpStringEscapesBasic
+    public static IDictionary<char, char> CsharpStringEscapesBasic => _csharpStringEscapesBasic ??= new Dictionary<char, char>()
     {
-        get
-        {
-            if (_csharpStringEscapesBasic == null)
-            {
-                _csharpStringEscapesBasic = new Dictionary<char, char>()
-                    {
-                        {'\'',  '\''},
-                        {'\\',  '\\'},
-                        {'"',  '"'},
-                        {'0',  '\0'},
-                        {'a',  '\a'},
-                        {'b',  '\b'},
-                        {'f',  '\f'},
-                        {'n',  '\n'},
-                        {'r',  '\r'},
-                        {'t',  '\t'},
-                        {'v',  '\v'},
-                    }.AsReadOnly();
-            }
-            return _csharpStringEscapesBasic;
-        }
-    }
+        ['\''] = '\'',
+        ['\\'] = '\\',
+        ['"'] = '"',
+        ['0'] = '\0',
+        ['a'] = '\a',
+        ['b'] = '\b',
+        ['f'] = '\f',
+        ['n'] = '\n',
+        ['r'] = '\r',
+        ['t'] = '\t',
+        ['v'] = '\v',
+    }.AsReadOnly();
 
     private static IDictionary<char, Func<LexReader, string>> _csharpStringEscapesAdvanced;
-    public static IDictionary<char, Func<LexReader, string>> CsharpStringEscapesAdvanced
+    public static IDictionary<char, Func<LexReader, string>> CsharpStringEscapesAdvanced => _csharpStringEscapesAdvanced ??= new Dictionary<char, Func<LexReader, string>>()
     {
-        get
-        {
-            if (_csharpStringEscapesAdvanced == null)
-            {
-                _csharpStringEscapesAdvanced = new Dictionary<char, Func<LexReader, string>>()
-                    {
-                        {'u', reader => LexUtil.LexCsharpUnicodeFixedLenCharEscape(reader, false)},
-                        {'U', reader => LexUtil.LexCsharpUnicodeFixedLenCharEscape(reader, true)},
-                        {'x', LexUtil.LexCsharpUnicodeVariableLenCharEscape}
-                    }.AsReadOnly();
-            }
-            return _csharpStringEscapesAdvanced;
-        }
-    }
+        ['u'] = static reader => LexCsharpUnicodeFixedLenCharEscape(reader, false),
+        ['U'] = static reader => LexCsharpUnicodeFixedLenCharEscape(reader, true),
+        ['x'] = LexCsharpUnicodeVariableLenCharEscape
+    }.AsReadOnly();
 
     #endregion
 }
