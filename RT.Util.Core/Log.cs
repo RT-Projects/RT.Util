@@ -1,4 +1,4 @@
-using RT.Util.Consoles;
+﻿using RT.Util.Consoles;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Util;
@@ -400,42 +400,47 @@ public sealed class StreamLogger : LoggerBase
 ///     Implements a logger which appends messages to a file by opening and closing the file each time. This is in contrast to
 ///     <see cref="StreamLogger"/>, which keeps the stream open.</summary>
 [Serializable]
-public sealed class FileAppendLogger : LoggerBase
+public sealed class FileAppendLogger(string filename, bool interpolateDate, TimeSpan? sharingVioWait) : LoggerBase
 {
-    /// <summary>Creates a new instance.</summary>
-    public FileAppendLogger() { Filename = null; }
-
-    /// <summary>Creates a new instance.</summary>
-    public FileAppendLogger(string filename) { Filename = filename; }
-
     /// <summary>Gets or sets the path to the file to which messages are logged.</summary>
-    public string Filename { get; set; }
+    public string Filename { get; set; } = filename;
+
+    /// <summary>
+    ///     If <c>true</c>, a <c>{0}</c> in <see cref="Filename"/> is replaced with the current date and time. Use
+    ///     <c>{0:...}</c> to specify a date format.</summary>
+    public bool InterpolateDate { get; set; } = interpolateDate;
 
     /// <summary>Gets or sets the amount of time to wait when the log file is in use. <c>null</c> waits indefinitely.</summary>
-    public TimeSpan? SharingVioWait { get; set; }
+    public TimeSpan? SharingVioWait { get; set; } = sharingVioWait;
+
+    /// <summary>Creates a new instance.</summary>
+    public FileAppendLogger() : this(null, false, null) { }
+
+    /// <summary>Creates a new instance.</summary>
+    public FileAppendLogger(string filename) : this(filename, false, null) { }
+
+    /// <summary>Creates a new instance.</summary>
+    public FileAppendLogger(string filename, bool interpolateDate) : this(filename, interpolateDate, null) { }
 
     /// <summary>Logs a message to the underlying stream.</summary>
     public override void Log(uint verbosity, LogType type, string message)
     {
         if (VerbosityLimit[type] < verbosity || Filename == null)
             return;
-        if (message == null)
-            message = "<null>";
+        message ??= "<null>";
 
         lock (this)
         {
-            string fmtInfo, indent;
-            GetFormattedStrings(out fmtInfo, out indent, verbosity, type);
+            var actualFilename = InterpolateDate ? string.Format(Filename, DateTime.UtcNow) : Filename;
+            GetFormattedStrings(out var fmtInfo, out var indent, verbosity, type);
 
             Ut.WaitSharingVio(maximum: SharingVioWait, action: () =>
             {
                 // Ensure that other processes can only read from the file, but not also write to it
-                using (var f = File.Open(Filename, FileMode.Append, FileAccess.Write, FileShare.Read))
-                using (var s = new StreamWriter(f))
-                {
-                    s.Write(fmtInfo);
-                    s.WriteLine(message);
-                }
+                using var f = File.Open(actualFilename, FileMode.Append, FileAccess.Write, FileShare.Read);
+                using var s = new StreamWriter(f);
+                s.Write(fmtInfo);
+                s.WriteLine(message);
             });
         }
     }
@@ -445,12 +450,10 @@ public sealed class FileAppendLogger : LoggerBase
     {
         lock (this)
         {
-            using (var f = File.AppendText(Filename))
-            {
-                f.WriteLine();
-                f.WriteLine(new string('-', 120));
-                f.WriteLine();
-            }
+            using var f = File.AppendText(Filename);
+            f.WriteLine();
+            f.WriteLine(new string('-', 120));
+            f.WriteLine();
         }
     }
 }
