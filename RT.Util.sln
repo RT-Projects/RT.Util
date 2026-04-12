@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.2.11415.280 d18.0
+VisualStudioVersion = 18.2.11415.280
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RT.Util", "RT.Util\RT.Util.csproj", "{D28BEEE2-3B47-433A-9CE0-E824DCFD4F82}"
 EndProject
@@ -44,8 +44,8 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D28BEEE2-3B47-433A-9CE0-E824DCFD4F82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D28BEEE2-3B47-433A-9CE0-E824DCFD4F82}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D28BEEE2-3B47-433A-9CE0-E824DCFD4F82}.Debug|Any CPU.ActiveCfg = Debug-locallibs|Any CPU
+		{D28BEEE2-3B47-433A-9CE0-E824DCFD4F82}.Debug|Any CPU.Build.0 = Debug-locallibs|Any CPU
 		{D28BEEE2-3B47-433A-9CE0-E824DCFD4F82}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D28BEEE2-3B47-433A-9CE0-E824DCFD4F82}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

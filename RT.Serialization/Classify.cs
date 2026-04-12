@@ -582,10 +582,16 @@ public static class Classify
                         .FirstOrDefault(asm => asm.GetName().Name == asmName.Name && asm.GetName().Version >= asmName.Version), null);
                 }
                 else
-                    serializedType = AppDomain.CurrentDomain.GetAssemblies()
+                {
+                    // First try to find the type in the assembly of the declared type
+                    serializedType = declaredType.Assembly.GetType(typeName) ?? declaredType.Assembly.GetType((declaredType.Namespace == null ? null : declaredType.Namespace + ".") + typeName);
+
+                    // If that doesn’t work, try to find the type in any assembly
+                    serializedType ??= AppDomain.CurrentDomain.GetAssemblies()
                         .Select(asm => asm.GetType(typeName) ?? asm.GetType((substType.Namespace == null ? null : substType.Namespace + ".") + typeName))
                         .Where(t => t != null)
                         .FirstOrDefault();
+                }
                 if (serializedType == null)
                     return _ => reportError(new Exception($"The type {typeName} needed for deserialization cannot be found."), objectPath);
             }

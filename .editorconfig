@@ -361,3 +361,6 @@ dotnet_diagnostic.CA2249.severity = none
 # CA1069: Enums are allowed to have repeating numerical values
 dotnet_diagnostic.CA1069.severity = none
 
+# CA1816: Enums are allowed to have repeating numerical values
+dotnet_diagnostic.CA1069.severity = none
+
