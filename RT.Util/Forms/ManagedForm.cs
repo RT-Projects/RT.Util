@@ -57,8 +57,12 @@ public class ManagedForm : Form
         SizeChanged += processResize;
         // Move event: keeps track of normal dimensions
         Move += processMove;
-        // Close event: save the settings
-        FormClosed += saveSettings;
+        // Close event: stop tracking resolution changes and save the settings
+        FormClosed += (_, _) =>
+        {
+            SystemEvents.DisplaySettingsChanged -= displaySettingsChanged;
+            saveSettings();
+        };
         // Restore position and size properly when the screen resolution changes
         SystemEvents.DisplaySettingsChanged += displaySettingsChanged;
 
@@ -382,7 +386,7 @@ public class ManagedForm : Form
         dimensions.Maximized = Maximized;
     }
 
-    private void saveSettings(object sender = null, FormClosedEventArgs e = null)
+    private void saveSettings()
     {
         updateDimensionsForLastScreenResolution();
         OnSettingsChanged();
