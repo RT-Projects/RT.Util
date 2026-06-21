@@ -180,6 +180,11 @@ public class ManagedForm : Form
 
             saveSettings();
         }
+        else if (WindowState == FormWindowState.Normal)
+        {
+            // Resizing bottom/right edge doesn't raise Move (which calls saveSettings too), so persist the updated normal size
+            saveSettings();
+        }
     }
 
     private void processMove(object sender = null, EventArgs e = null)
