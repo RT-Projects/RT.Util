@@ -102,9 +102,10 @@ public class ManagedForm : Form
                     dimensions.Top >= screen.WorkingArea.Top + 10 - dimensions.Height && dimensions.Top <= screen.WorkingArea.Bottom - 10;
             if (!visible)
             {
+                // Center on the primary working area, clamping to its edges like ShowDialog does
                 var primaryScreenWA = Screen.PrimaryScreen.WorkingArea;
-                dimensions.Left = primaryScreenWA.Left + primaryScreenWA.Width / 2 - dimensions.Width / 2;
-                dimensions.Top = primaryScreenWA.Top + primaryScreenWA.Height / 2 - dimensions.Height / 2;
+                dimensions.Left = (primaryScreenWA.Left + (primaryScreenWA.Width - dimensions.Width) / 2).ClipMax(primaryScreenWA.Right - dimensions.Width).ClipMin(primaryScreenWA.Left);
+                dimensions.Top = (primaryScreenWA.Top + (primaryScreenWA.Height - dimensions.Height) / 2).ClipMax(primaryScreenWA.Bottom - dimensions.Height).ClipMin(primaryScreenWA.Top);
             }
             Left = _normalLeft = dimensions.Left;
             Top = _normalTop = dimensions.Top;
@@ -139,6 +140,11 @@ public class ManagedForm : Form
 
     private void processResize(object sender = null, EventArgs e = null)
     {
+        // Ignore spurious resize events that fire during a resolution change before DisplaySettingsChanged (see processMove)
+        var vs = SystemInformation.VirtualScreen;
+        if (vs.Width + "x" + vs.Height != _lastScreenResolution)
+            return;
+
         // Update normal size
         if (WindowState == FormWindowState.Normal)
         {
